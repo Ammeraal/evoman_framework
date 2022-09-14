@@ -18,7 +18,7 @@ def eval_genomes_factory(game):
     return eval_genomes
 
 
-def run(config_file,generation_count = 20):
+def run(config_file,generation_count = 100):
     # Load configuration.
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -31,7 +31,7 @@ def run(config_file,generation_count = 20):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(5))
+    p.add_reporter(neat.Checkpointer(5, filename_prefix="./specialist_solution/neat-checkpoint-"))
 
     # create environment
     game = GameManager(player_controller())
@@ -47,10 +47,10 @@ def run(config_file,generation_count = 20):
     print('\nOutput:')
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
 
-    #visualize.draw_net(config, winner, True, node_names=node_names)
-    #visualize.draw_net(config, winner, True, node_names=node_names, prune_unused=True)
-    #visualize.plot_stats(stats, ylog=False, view=True)
-    #visualize.plot_species(stats, view=True)
+    visualize.draw_net(config, winner, True)#, node_names=node_names)
+    #visualize.draw_net(config, winner, True, prune_unused=True)#, node_names=node_names, prune_unused=True)
+    visualize.plot_stats(stats, ylog=False, view=True)
+    visualize.plot_species(stats, view=True)
 
     # TODO checkpoint stuff
     #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
@@ -64,4 +64,4 @@ if __name__ == '__main__':
     # current working directory.
     #local_dir = os.path.dirname(__file__)
     config_path = os.path.join(f"./specialist_solution", 'neat_config')
-    run(config_path)
+    run(config_path, 5)
