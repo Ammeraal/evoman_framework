@@ -5,8 +5,8 @@ import neat
 import visualize
 
 sys.path.insert(0, 'evoman')
-from evoman.environment import Environment
 from specialist_controller_solution import player_controller
+from game_setup_solution import GameManager
 
 
 def eval_genomes_factory(game):
@@ -18,7 +18,7 @@ def eval_genomes_factory(game):
     return eval_genomes
 
 
-def run(config_file):
+def run(config_file,generation_count = 20):
     # Load configuration.
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -34,18 +34,11 @@ def run(config_file):
     p.add_reporter(neat.Checkpointer(5))
 
     # create environment
-    experiment_name = "specialist_solution"
-    game = Environment(experiment_name=experiment_name,
-                       enemies=[2],
-                       playermode="ai",
-                       player_controller=player_controller(),
-                       enemymode="static",
-                       level=2,
-                       speed="fastest")
+    game = GameManager(player_controller())
 
     # Run for up to 300 generations.
     eval_genomes = eval_genomes_factory(game=game)
-    winner = p.run(eval_genomes, 20)
+    winner = p.run(eval_genomes, generation_count)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
@@ -53,11 +46,7 @@ def run(config_file):
     # Show output of the most fit genome against training data.
     print('\nOutput:')
     winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
-    #for xi, xo in zip(xor_inputs, xor_outputs):
-    #    output = winner_net.activate(xi)
-    #    print("input {!r}, expected output {!r}, got {!r}".format(xi, xo, output))
 
-    #node_names = {-1: 'A', -2: 'B', 0: 'A XOR B'}
     #visualize.draw_net(config, winner, True, node_names=node_names)
     #visualize.draw_net(config, winner, True, node_names=node_names, prune_unused=True)
     #visualize.plot_stats(stats, ylog=False, view=True)
