@@ -163,3 +163,10 @@ cython_debug/
 
 # Virtual Environment
 evoAlgo/
+
+# vim
+*.swp
+
+# project specific
+neat-checkpoint-*
+*_logs.txt
