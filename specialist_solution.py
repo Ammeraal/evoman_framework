@@ -36,7 +36,7 @@ def run(config_file):
     # create environment
     experiment_name = "specialist_solution"
     game = Environment(experiment_name=experiment_name,
-                       enemies=[2],
+                       enemies=[1],
                        playermode="ai",
                        player_controller=player_controller(),
                        enemymode="static",
@@ -45,7 +45,7 @@ def run(config_file):
 
     # Run for up to 300 generations.
     eval_genomes = eval_genomes_factory(game=game)
-    winner = p.run(eval_genomes, 20)
+    winner = p.run(eval_genomes, 300)
 
     # Display the winning genome.
     print('\nBest genome:\n{!s}'.format(winner))
@@ -63,13 +63,18 @@ def run(config_file):
     #visualize.plot_stats(stats, ylog=False, view=True)
     #visualize.plot_species(stats, view=True)
 
+    # TODO checkpoint stuff
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
 
-    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
-
-    p.run(eval_genomes, 10)
+    #p.run(eval_genomes, 10)
 
 
 if __name__ == '__main__':
+    # choose this for not using visuals and thus making experiments faster
+    headless = False
+    if headless:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+
     # Determine path to configuration file. This path manipulation is
     # here so that the script will run successfully regardless of the
     # current working directory.
