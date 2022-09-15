@@ -2,6 +2,8 @@ import numpy as np
 import random
 from numpy.random import default_rng
 from Genome import Genome
+from game_setup_solution import GameManager
+from demo_controller import player_controller
 
 
 def init_population(pop_size, _n_hidden):
@@ -12,9 +14,13 @@ def init_population(pop_size, _n_hidden):
     init_bias = 0.0
 
     # num neurons
-    sum = num_inputs * _n_hidden[0] + _n_hidden[-1] * num_output
-    for i in range(1, len(_n_hidden)):
-        sum += _n_hidden[i - 1] * _n_hidden[i]
+    sum = 0
+    if _n_hidden > 0:
+        #           weights layer1      bias1           w2                      b2
+        sum = num_inputs * _n_hidden + _n_hidden + _n_hidden * num_output + num_output
+    else:
+        # no hidden layer
+        sum = num_inputs * num_output + num_output
 
     # TODO do this more efficient!
     pop = []
@@ -45,21 +51,31 @@ def mutate(pop):
     # draw probability from distribution, if prob <= mutation threshold, mutate gene
     # mutate gene by changing it into random value between lower and upper domain
 
-def evaluate_fitness(pop):
-    pass
+def evaluate_fitness_factory(game):
+    def evaluate_fitness(pop):
+        # TODO trigger game with all net configs
+        # TODO parallelize
+        for g in pop:
+            g.fitness = 0.0
+            g.fitness, p, e, t = game.play(pcont=g.value)
+
+    return evaluate_fitness
 
 def selection(pop):
     # TODO return subset of pop
     return np.array([])
 
-def crossover(parents_list : np.array()):
+def crossover(parents_list):
     # TODO return list of the new offspring
     return np.array([])
 
 if __name__=="__main__":
     pop_size = 20
     generations = 10
-    n_hidden = np.array([8])
+    n_hidden = 8
+
+    game = GameManager(controller=player_controller(n_hidden))
+    evaluate_fitness = evaluate_fitness_factory(game)
 
     pop = init_population(pop_size=pop_size, _n_hidden=n_hidden)
     # TODO evaluation
