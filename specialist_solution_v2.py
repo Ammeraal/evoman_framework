@@ -89,8 +89,25 @@ def selection(pop):
     return np.array([mating_pool])
 
 def crossover(parents_list):
-    # TODO return list of the new offspring
-    return np.array([])
+    children = []
+    for z in range(pop_size):
+        while True:
+            parent1 = random.choice(parents_list)
+            parent2 = random.choice(parents_list)
+            if parent1 != parent2:
+                break
+
+        child = []
+        for i in range(len(parent1)):
+            bool = random.getrandbits(1)
+            if bool == 1:
+                child.append(parent1[i])
+            else:
+                child.append(parent2[i])
+        children.append(child)
+    children = np.array(children)
+
+    return children
 
 if __name__=="__main__":
     pop_size = 20
