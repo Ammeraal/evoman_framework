@@ -1,3 +1,4 @@
+from calendar import c
 import numpy as np
 import random
 from numpy.random import default_rng
@@ -88,7 +89,12 @@ def selection(pop):
         
     return np.array([mating_pool])
 
+<<<<<<< Updated upstream
 def crossover(parents_list):
+=======
+def crossover(parents_list, pop_size):
+    # TODO return list of the new offspring
+>>>>>>> Stashed changes
     children = []
     for z in range(pop_size):
         while True:
