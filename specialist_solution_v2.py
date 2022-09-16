@@ -62,8 +62,31 @@ def evaluate_fitness_factory(game):
     return evaluate_fitness
 
 def selection(pop):
-    # TODO return subset of pop
-    return np.array([])
+    p=[]
+    mating_pool=[]
+    fitness=[]
+    
+    # assess the probability of offspring for each individual (5.2.2 Ranking selection)
+    z=round(len(pop)/4) # number of parents
+    for g in pop:
+        fitness.append(np.random.uniform(0,20))
+    order=np.argsort(fitness)
+    s=2
+    for i in order:
+        p.append((2-s)/z + (2*i*(s-1))/(z*(z-1)))
+    
+    # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
+    current_member=i=1
+    r=np.random.uniform(0,1/z)
+    while current_member<=z:
+        while r<=p[i]:
+            mating_pool.append(pop[i])
+            r=r+1/z
+            current_member+=1
+            break
+        i+=1
+        
+    return np.array([mating_pool])
 
 def crossover(parents_list):
     # TODO return list of the new offspring
