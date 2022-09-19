@@ -87,18 +87,21 @@ def selection(pop):
             break
         i+=1
         
-    return np.array([mating_pool])
+    return np.array(mating_pool)
 
 def crossover(parents_list, pop_size):
     # TODO return list of the new offspring
     children = []
     for z in range(pop_size):
         while True:
-            parent1 = random.choice(parents_list)
-            parent2 = random.choice(parents_list)
-            if parent1 != parent2:
+            parent1_idx = random.randint(0, len(parents_list) - 1)
+            parent2_idx = random.randint(0, len(parents_list) - 1)
+            # hotfix by paddy: I guess the idea is to choose two different parents
+            if parent1_idx != parent2_idx:
                 break
 
+        parent1 = parents_list[parent1_idx].value
+        parent2 = parents_list[parent2_idx].value
         child = []
         for i in range(len(parent1)):
             bool = random.getrandbits(1)
@@ -112,7 +115,7 @@ def crossover(parents_list, pop_size):
     return children
 
 if __name__=="__main__":
-    pop_size = 20
+    pop_size = 6
     generations = 10
     n_hidden = 8
 
