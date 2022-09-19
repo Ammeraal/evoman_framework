@@ -89,12 +89,8 @@ def selection(pop):
         
     return np.array([mating_pool])
 
-<<<<<<< Updated upstream
-def crossover(parents_list):
-=======
 def crossover(parents_list, pop_size):
     # TODO return list of the new offspring
->>>>>>> Stashed changes
     children = []
     for z in range(pop_size):
         while True:
@@ -128,7 +124,7 @@ if __name__=="__main__":
     for i in range(generations):
         evaluate_fitness(pop)
         selected_parents = selection(pop)
-        offspring = crossover(selected_parents)
+        offspring = crossover(selected_parents, pop_size=pop_size)
         mutate(offspring)
 
 
