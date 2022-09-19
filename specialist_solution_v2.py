@@ -33,24 +33,21 @@ def init_population(pop_size, _n_hidden):
     return np.array(pop)
 
 def mutate(pop):
-    #define mutation rate
+    # define mutation rate
     mut_rate = 0.2
     pop_offspring = []
     for genome in pop:
         offspring = []
         for gene in genome:
-            #draw random probability for mutation
+            # draw random probability for mutation
             mutate = np.random.uniform(0, 1)
-            #if mutation prob is below mutation rate, mutate gene in genome by adding random number
+            # if mutation prob is below mutation rate, mutate gene in genome by adding random number
             if mutate <= mut_rate:
                 offspring.append(gene + np.random.normal())
             else:
                 offspring.append(gene)
         pop_offspring.append(offspring)
     return np.array(pop_offspring)
-
-    # draw probability from distribution, if prob <= mutation threshold, mutate gene
-    # mutate gene by changing it into random value between lower and upper domain
 
 def evaluate_fitness_factory(game):
     def evaluate_fitness(pop):
