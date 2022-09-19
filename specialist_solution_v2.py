@@ -109,7 +109,9 @@ def crossover(parents_list, pop_size):
                 child.append(parent1[i])
             else:
                 child.append(parent2[i])
-        children.append(child)
+
+        new_genome = Genome(child)
+        children.append(new_genome)
     children = np.array(children)
 
     return children
@@ -125,9 +127,16 @@ if __name__=="__main__":
     pop = init_population(pop_size=pop_size, _n_hidden=n_hidden)
     # TODO evaluation
     for i in range(generations):
+        print("Starting with evaluation of generation {} ...".format(i))
         evaluate_fitness(pop)
+
         selected_parents = selection(pop)
         offspring = crossover(selected_parents, pop_size=pop_size)
         mutate(offspring)
+
+    # TODO print best fitness
+    # TODO implement early stopping
+    # TODO somehow save the weights
+    print("all done!")
 
 
