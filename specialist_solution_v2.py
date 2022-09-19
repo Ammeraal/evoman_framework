@@ -69,7 +69,7 @@ def selection(pop):
     # assess the probability of offspring for each individual (5.2.2 Ranking selection)
     z=round(len(pop)/4) # number of parents
     for g in pop:
-        fitness.append(np.random.uniform(0,20))
+        fitness.append(g.fitness)
     order=np.argsort(fitness)
     s=2
     for i in order:
