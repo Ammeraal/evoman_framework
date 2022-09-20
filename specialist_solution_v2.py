@@ -53,7 +53,7 @@ def mutate(pop):
                 offspring.append(w)
             else:
                 offspring.append(gene)
-        pop_offspring.append(Genome(offspring))
+        pop_offspring.append(Genome(np.array(offspring)))
     return np.array(pop_offspring)
 
 def evaluate_fitness_factory(game):
@@ -139,8 +139,7 @@ if __name__=="__main__":
 
         selected_parents = selection(pop)
         offspring = crossover(selected_parents, pop_size=pop_size)
-        mutate(offspring)
-        pop = offspring
+        pop = mutate(offspring)
 
     # TODO print best fitness
     # TODO implement early stopping
