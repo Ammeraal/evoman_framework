@@ -125,16 +125,35 @@ def save_fitness(file_handle, pop):
     np.savetxt(file_handle, np.array(fitness_values), newline=" ")
     file_handle.write("\n")
 
+
+def save_population(path, pop):
+    print("saving population at {}".format(path))
+    np.save(path, pop)
+
+
+def load_population(path):
+    print("loading initial population for {}".format(path))
+    return np.load(path, allow_pickle=True)
+
+
+
 if __name__=="__main__":
+    # Hyper params
     pop_size = 6
     generations = 100
     n_hidden = 0
-    s = 2               # used in formula to allocate selection probabilities 
+    s = 2               # used in formula to allocate selection probabilities
     mut_rate = 0.2
     mean = 0
     sigma = 0.25
 
-    experiment_name = "test1"
+    # additional settings
+    experiment_name = "test1"           # all savings will be in a directory of this name
+    save_interval = 2                  # there will be a save of the population every x generations
+    load_pop = True                    # if true the state stored in the generation of <load_generation> be used as initial population
+    load_generation = 4
+
+
     save_dir = f"specialist_solution_v2/{experiment_name}/"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -142,12 +161,18 @@ if __name__=="__main__":
     game = GameManager(controller=player_controller(n_hidden))
     evaluate_fitness = evaluate_fitness_factory(game)
 
-    save_txt_handle = open(f"{save_dir}fitness.csv", "w")
+    # initialization
+    if not load_pop:
+        pop = init_population(pop_size=pop_size, _n_hidden=n_hidden)
+        save_txt_handle = open(f"{save_dir}fitness.csv", "w")
+        load_generation = -1
+    else:
+        pop = load_population(f"{save_dir}pop_{load_generation}.npy")
+        save_txt_handle = open(f"{save_dir}fitness.csv", "a")
 
-    pop = init_population(pop_size=pop_size, _n_hidden=n_hidden)
-
-    # TODO evaluation
-    for i in range(generations):
+    # evaluation
+    # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
+    for i in range(load_generation + 1, generations):
         print("**** Starting with evaluation of generation {} ...".format(i))
         evaluate_fitness(pop)
         save_fitness(save_txt_handle, pop)
@@ -156,9 +181,12 @@ if __name__=="__main__":
         offspring = crossover(selected_parents, pop_size=pop_size)
         pop = mutate(offspring,mut_rate,mean,sigma)
 
+        # saving system
+        if i % save_interval == 0:
+            save_population(f"{save_dir}pop_{i}", pop)
+
     # TODO print best fitness
     # TODO implement early stopping
-    # TODO somehow save the weights
     print("all done!")
     save_txt_handle.close()
 
