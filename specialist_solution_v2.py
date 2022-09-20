@@ -35,8 +35,10 @@ def init_population(pop_size, _n_hidden):
 def mutate(pop):
     # define mutation rate
     mut_rate = 0.2
+
     pop_offspring = []
-    for genome in pop:
+    for individual in pop:
+        genome = individual.value
         offspring = []
         for gene in genome:
             # draw random probability for mutation
@@ -46,7 +48,7 @@ def mutate(pop):
                 offspring.append(gene + np.random.normal())
             else:
                 offspring.append(gene)
-        pop_offspring.append(offspring)
+        pop_offspring.append(Genome(offspring))
     return np.array(pop_offspring)
 
 def evaluate_fitness_factory(game):
@@ -60,7 +62,9 @@ def evaluate_fitness_factory(game):
     return evaluate_fitness
 
 def selection(pop):
-    p=[]
+    s=2
+
+    p = []
     mating_pool=[]
     fitness=[]
     
@@ -69,7 +73,6 @@ def selection(pop):
     for g in pop:
         fitness.append(g.fitness)
     order=np.argsort(fitness)
-    s=2
     for i in order:
         p.append((2-s)/z + (2*i*(s-1))/(z*(z-1)))
     
