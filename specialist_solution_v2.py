@@ -35,17 +35,18 @@ def init_population(pop_size, _n_hidden):
 def mutate(pop):
     # define mutation rate
     mut_rate = 0.2
+    mean = 0
+    sigma = 0.25
     pop_offspring = []
     for individual in pop:
         genome = individual.value
         offspring = []
         for gene in genome:
-            w = 0
             # draw random probability for mutation
             mutate = np.random.uniform(0, 1)
             # if mutation prob is below mutation rate, mutate gene in genome by adding random number
             if mutate <= mut_rate:
-                w = gene + np.random.normal()
+                w = gene + np.random.normal(mean, sigma)
                 if w > 1:
                     w = 1
                 elif w < -1:
@@ -122,8 +123,8 @@ def crossover(parents_list, pop_size):
     return children
 
 if __name__=="__main__":
-    pop_size = 6
-    generations = 10
+    pop_size = 20
+    generations = 100
     n_hidden = 0
 
     game = GameManager(controller=player_controller(n_hidden))
