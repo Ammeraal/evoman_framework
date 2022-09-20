@@ -67,9 +67,7 @@ def evaluate_fitness_factory(game):
 
     return evaluate_fitness
 
-def selection(pop):
-    s=2
-
+def selection(pop,s):
     p = []
     mating_pool=[]
     fitness=[]
@@ -126,6 +124,7 @@ if __name__=="__main__":
     pop_size = 20
     generations = 100
     n_hidden = 0
+    s = 2               # used in formula to allocate selection probabilities 
 
     game = GameManager(controller=player_controller(n_hidden))
     evaluate_fitness = evaluate_fitness_factory(game)
@@ -138,7 +137,7 @@ if __name__=="__main__":
         print("Starting with evaluation of generation {} ...".format(i))
         evaluate_fitness(pop)
 
-        selected_parents = selection(pop)
+        selected_parents = selection(pop,s)
         offspring = crossover(selected_parents, pop_size=pop_size)
         pop = mutate(offspring)
 
