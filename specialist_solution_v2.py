@@ -35,17 +35,22 @@ def init_population(pop_size, _n_hidden):
 def mutate(pop):
     # define mutation rate
     mut_rate = 0.2
-
     pop_offspring = []
     for individual in pop:
         genome = individual.value
         offspring = []
         for gene in genome:
+            w = 0
             # draw random probability for mutation
             mutate = np.random.uniform(0, 1)
             # if mutation prob is below mutation rate, mutate gene in genome by adding random number
             if mutate <= mut_rate:
-                offspring.append(gene + np.random.normal())
+                w = gene + np.random.normal()
+                if w > 1:
+                    w = 1
+                elif w < -1:
+                    w = -1
+                offspring.append(w)
             else:
                 offspring.append(gene)
         pop_offspring.append(Genome(offspring))
