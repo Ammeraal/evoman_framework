@@ -140,6 +140,7 @@ if __name__=="__main__":
         selected_parents = selection(pop)
         offspring = crossover(selected_parents, pop_size=pop_size)
         mutate(offspring)
+        pop = offspring
 
     # TODO print best fitness
     # TODO implement early stopping
