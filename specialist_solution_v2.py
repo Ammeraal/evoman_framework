@@ -5,6 +5,7 @@ from numpy.random import default_rng
 from Genome import Genome
 from game_setup_solution import GameManager
 from demo_controller import player_controller
+import os
 
 
 def init_population(pop_size, _n_hidden):
@@ -116,8 +117,16 @@ def crossover(parents_list, pop_size):
 
     return children
 
+
+def save_fitness(file_handle, pop):
+    print("saving pop to file")
+
+    fitness_values = [p.fitness for p in pop]
+    np.savetxt(file_handle, np.array(fitness_values), newline=" ")
+    file_handle.write("\n")
+
 if __name__=="__main__":
-    pop_size = 20
+    pop_size = 6
     generations = 100
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities 
@@ -125,16 +134,23 @@ if __name__=="__main__":
     mean = 0
     sigma = 0.25
 
+    experiment_name = "test1"
+    save_dir = f"specialist_solution_v2/{experiment_name}/"
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
     game = GameManager(controller=player_controller(n_hidden))
     evaluate_fitness = evaluate_fitness_factory(game)
 
+    save_txt_handle = open(f"{save_dir}fitness.csv", "w")
+
     pop = init_population(pop_size=pop_size, _n_hidden=n_hidden)
-    for p in pop:
-        print(p.value)
+
     # TODO evaluation
     for i in range(generations):
-        print("Starting with evaluation of generation {} ...".format(i))
+        print("**** Starting with evaluation of generation {} ...".format(i))
         evaluate_fitness(pop)
+        save_fitness(save_txt_handle, pop)
 
         selected_parents = selection(pop,s)
         offspring = crossover(selected_parents, pop_size=pop_size)
@@ -144,5 +160,6 @@ if __name__=="__main__":
     # TODO implement early stopping
     # TODO somehow save the weights
     print("all done!")
+    save_txt_handle.close()
 
 
