@@ -12,7 +12,7 @@ def init_population(pop_size, _n_hidden):
     seed = 42
     num_inputs = 20
     num_output = 5
-    init_bias = 0.0
+    init_bias = -1.0
 
     # num neurons
     sum = 0
@@ -26,7 +26,7 @@ def init_population(pop_size, _n_hidden):
     # TODO do this more efficient!
     pop = []
     for i in range(pop_size):
-        g = Genome(default_rng(seed).random(sum) + init_bias)
+        g = Genome(default_rng(seed).random(sum) * 2 + init_bias)
         pop.append(g)
         seed += 1
 
@@ -119,12 +119,14 @@ def crossover(parents_list, pop_size):
 if __name__=="__main__":
     pop_size = 6
     generations = 10
-    n_hidden = 8
+    n_hidden = 0
 
     game = GameManager(controller=player_controller(n_hidden))
     evaluate_fitness = evaluate_fitness_factory(game)
 
     pop = init_population(pop_size=pop_size, _n_hidden=n_hidden)
+    for p in pop:
+        print(p.value)
     # TODO evaluation
     for i in range(generations):
         print("Starting with evaluation of generation {} ...".format(i))
