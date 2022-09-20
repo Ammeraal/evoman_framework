@@ -126,6 +126,23 @@ def save_fitness(file_handle, pop):
     file_handle.write("\n")
 
 
+def diversity(pop):
+    """
+    Returns a scalar that indicates the diversity of a population.
+    The higher this value the higher the diversity.
+    This heuristic is normalized among the pop size but not the genome length.
+    """
+
+    similar_sum = 0
+    for i in range(len(pop)):
+        for k in range(i+1, len(pop)):
+            similar_sum += sum((pop[i].value - pop[k].value) ** 2)
+
+    # normalize by amount of individual sums
+    return similar_sum / ( (len(pop)**2 - len(pop)) / 2. )
+
+
+
 def save_population(path, pop):
     print("saving population at {}".format(path))
     np.save(path, pop)
@@ -149,8 +166,8 @@ if __name__=="__main__":
 
     # additional settings
     experiment_name = "test1"           # all savings will be in a directory of this name
-    save_interval = 2                  # there will be a save of the population every x generations
-    load_pop = True                    # if true the state stored in the generation of <load_generation> be used as initial population
+    save_interval = 10                  # there will be a save of the population every x generations
+    load_pop = False                    # if true the state stored in the generation of <load_generation> be used as initial population
     load_generation = 4
 
 
@@ -173,7 +190,7 @@ if __name__=="__main__":
     # evaluation
     # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
     for i in range(load_generation + 1, generations):
-        print("**** Starting with evaluation of generation {} ...".format(i))
+        print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, diversity(pop)))
         evaluate_fitness(pop)
         save_fitness(save_txt_handle, pop)
 
