@@ -32,11 +32,7 @@ def init_population(pop_size, _n_hidden):
 
     return np.array(pop)
 
-def mutate(pop):
-    # define mutation rate
-    mut_rate = 0.2
-    mean = 0
-    sigma = 0.25
+def mutate(pop,mut_rate,mean,sigma):
     pop_offspring = []
     for individual in pop:
         genome = individual.value
@@ -125,6 +121,9 @@ if __name__=="__main__":
     generations = 100
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities 
+    mut_rate = 0.2
+    mean = 0
+    sigma = 0.25
 
     game = GameManager(controller=player_controller(n_hidden))
     evaluate_fitness = evaluate_fitness_factory(game)
@@ -139,7 +138,7 @@ if __name__=="__main__":
 
         selected_parents = selection(pop,s)
         offspring = crossover(selected_parents, pop_size=pop_size)
-        pop = mutate(offspring)
+        pop = mutate(offspring,mut_rate,mean,sigma)
 
     # TODO print best fitness
     # TODO implement early stopping
