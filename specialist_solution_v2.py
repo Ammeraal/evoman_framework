@@ -103,6 +103,8 @@ def crossover(parents_list, pop_size):
                 break
 
         parent1 = parents_list[parent1_idx].value
+        print(parent1_idx)
+        print(parent2_idx)
         parent2 = parents_list[parent2_idx].value
         child = []
         for i in range(len(parent1)):
@@ -169,12 +171,12 @@ def visualize(file):
     plt.xlabel("Generation")
     plt.ylabel("Fitness")
     plt.fill_between(range(generations), df_avg - df_std, df_avg + df_std, alpha=.3)
-    plt.savefig()
+    plt.savefig("avg_lineplot.png")
 
 if __name__=="__main__":
     # Hyper params
     pop_size = 6
-    generations = 100
+    generations = 10
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities
     mut_rate = 0.2
@@ -224,7 +226,7 @@ if __name__=="__main__":
     print("all done!")
     save_txt_handle.close()
     print("visualizing and saving results...")
-    visualize("fitness.csv")
+    visualize("specialist_solution_v2/test1/fitness.csv")
 
 
 
