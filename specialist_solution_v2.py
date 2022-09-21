@@ -153,6 +153,7 @@ def load_population(path):
     print("loading initial population for {}".format(path))
     return np.load(path, allow_pickle=True)
 
+
 def visualize(file):
     # make plot of mean fitness over generations, with standard deviation
     # TODO mean should average over 10 runs!! for now this is just one run
@@ -167,7 +168,7 @@ def visualize(file):
     plt.plot(df_avg)
     plt.xlabel("Generation")
     plt.ylabel("Fitness")
-    plt.fill_between(range(100), df_avg - df_std, df_avg + df_std, alpha=.3)
+    plt.fill_between(range(generations), df_avg - df_std, df_avg + df_std, alpha=.3)
     plt.savefig()
 
 if __name__=="__main__":
@@ -224,5 +225,6 @@ if __name__=="__main__":
     save_txt_handle.close()
     print("visualizing and saving results...")
     visualize("fitness.csv")
+
 
 
