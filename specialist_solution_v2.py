@@ -74,8 +74,9 @@ def selection(pop,s):
     z=round(len(pop)/4) # number of parents
     for g in pop:
         fitness.append(g.fitness)
-    order=np.argsort(fitness)
-    for i in order:
+    order = np.argsort(fitness)
+    ranks = np.argsort(order)
+    for i in ranks:
         p.append((2-s)/z + (2*i*(s-1))/(z*(z-1)))
     
     # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
@@ -88,7 +89,6 @@ def selection(pop,s):
             current_member+=1
             break
         i+=1
-        
     return np.array(mating_pool)
 
 def crossover(parents_list, pop_size):
@@ -103,8 +103,6 @@ def crossover(parents_list, pop_size):
                 break
 
         parent1 = parents_list[parent1_idx].value
-        print(parent1_idx)
-        print(parent2_idx)
         parent2 = parents_list[parent2_idx].value
         child = []
         for i in range(len(parent1)):
@@ -175,8 +173,8 @@ def visualize(file):
 
 if __name__=="__main__":
     # Hyper params
-    pop_size = 6
-    generations = 10
+    pop_size = 20
+    generations = 100
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities
     mut_rate = 0.2
