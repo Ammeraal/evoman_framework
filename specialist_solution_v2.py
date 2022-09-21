@@ -6,7 +6,8 @@ from Genome import Genome
 from game_setup_solution import GameManager
 from demo_controller import player_controller
 import os
-
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def init_population(pop_size, _n_hidden):
     # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
@@ -152,7 +153,22 @@ def load_population(path):
     print("loading initial population for {}".format(path))
     return np.load(path, allow_pickle=True)
 
+def visualize(file):
+    # make plot of mean fitness over generations, with standard deviation
+    # TODO mean should average over 10 runs!! for now this is just one run
+    # TODO include max fitness with standard deviation over 10 runs
+    # TODO make separate plots for enemies
+    df = pd.read_csv(file, header=None, sep=" ").iloc[:, :-1]
+    df_avg = df.mean(axis=1)
+    df_std = df.std(axis=1)
+    df_max = df.max(axis=1)
 
+    # make plot
+    plt.plot(df_avg)
+    plt.xlabel("Generation")
+    plt.ylabel("Fitness")
+    plt.fill_between(range(100), df_avg - df_std, df_avg + df_std, alpha=.3)
+    plt.savefig()
 
 if __name__=="__main__":
     # Hyper params
@@ -206,5 +222,7 @@ if __name__=="__main__":
     # TODO implement early stopping
     print("all done!")
     save_txt_handle.close()
+    print("visualizing and saving results...")
+    visualize("fitness.csv")
 
 
