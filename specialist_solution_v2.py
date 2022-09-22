@@ -6,7 +6,8 @@ from Genome import Genome
 from game_setup_solution import GameManager
 from demo_controller import player_controller
 import os
-
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def init_population(pop_size, _n_hidden):
     # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
@@ -73,8 +74,9 @@ def selection(pop,s):
     z=round(len(pop)/4) # number of parents
     for g in pop:
         fitness.append(g.fitness)
-    order=np.argsort(fitness)
-    for i in order:
+    order = np.argsort(fitness)
+    ranks = np.argsort(order)
+    for i in ranks:
         p.append((2-s)/z + (2*i*(s-1))/(z*(z-1)))
     
     # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
@@ -87,7 +89,6 @@ def selection(pop,s):
             current_member+=1
             break
         i+=1
-        
     return np.array(mating_pool)
 
 def uniform_crossover(parents_list, pop_size):
@@ -175,10 +176,26 @@ def load_population(path):
     return np.load(path, allow_pickle=True)
 
 
+def visualize(file):
+    # make plot of mean fitness over generations, with standard deviation
+    # TODO mean should average over 10 runs!! for now this is just one run
+    # TODO include max fitness with standard deviation over 10 runs
+    # TODO make separate plots for enemies
+    df = pd.read_csv(file, header=None, sep=" ").iloc[:, :-1]
+    df_avg = df.mean(axis=1)
+    df_std = df.std(axis=1)
+    df_max = df.max(axis=1)
+
+    # make plot
+    plt.plot(df_avg)
+    plt.xlabel("Generation")
+    plt.ylabel("Fitness")
+    plt.fill_between(range(generations), df_avg - df_std, df_avg + df_std, alpha=.3)
+    plt.savefig("avg_lineplot.png")
 
 if __name__=="__main__":
     # Hyper params
-    pop_size = 6
+    pop_size = 20
     generations = 100
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities
@@ -228,5 +245,8 @@ if __name__=="__main__":
     # TODO implement early stopping
     print("all done!")
     save_txt_handle.close()
+    print("visualizing and saving results...")
+    visualize("specialist_solution_v2/test1/fitness.csv")
+
 
 
