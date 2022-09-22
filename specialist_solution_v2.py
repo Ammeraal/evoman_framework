@@ -7,6 +7,14 @@ from game_setup_solution import GameManager
 from demo_controller import player_controller
 import os
 
+import time
+import concurrent.futures
+import multiprocessing
+import concurrent.futures
+from tkinter import E
+
+start = time.perf_counter()
+
 
 def init_population(pop_size, _n_hidden):
     # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
@@ -53,6 +61,21 @@ def mutate(pop,mut_rate,mean,sigma):
                 offspring.append(gene)
         pop_offspring.append(Genome(np.array(offspring)))
     return np.array(pop_offspring)
+
+def threaded_evaluation(population):
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        # We submit the list of the seconds we want to have.
+        # TODO insert list of all genomes
+
+        executor.map(threaded_evaluation_fittness, population)
+
+
+def threaded_evaluation_fittness(g):
+    game = GameManager(controller=player_controller(n_hidden))
+    g.fitness = 0.0
+    g.fitness, p, e, t = game.play(pcont=g.value)
+
+
 
 def evaluate_fitness_factory(game):
     def evaluate_fitness(pop):
@@ -156,7 +179,7 @@ def load_population(path):
 
 if __name__=="__main__":
     # Hyper params
-    pop_size = 6
+    pop_size = 20
     generations = 100
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities
@@ -191,7 +214,9 @@ if __name__=="__main__":
     # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
     for i in range(load_generation + 1, generations):
         print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, diversity(pop)))
-        evaluate_fitness(pop)
+        start = time.perf_counter()
+        threaded_evaluation(pop)
+
         save_fitness(save_txt_handle, pop)
 
         selected_parents = selection(pop,s)
@@ -202,9 +227,10 @@ if __name__=="__main__":
         if i % save_interval == 0:
             save_population(f"{save_dir}pop_{i}", pop)
 
+        end = time.perf_counter()
+        print("execution for one generation took: {} sec".format(end-start))
+
     # TODO print best fitness
     # TODO implement early stopping
     print("all done!")
     save_txt_handle.close()
-
-

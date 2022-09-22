@@ -38,7 +38,7 @@ class GameManager():
                           level=2,
                           speed="fastest")
         # default environment fitness is assumed for experiment
-        env.state_to_log() # checks environment state
+        #env.state_to_log() # checks environment state
         ####   Optimization for controller solution (best genotype-weights for phenotype-network): Ganetic Algorihm    ###
         ini = time.time()  # sets time marker
         self.environment = env
