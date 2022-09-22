@@ -90,7 +90,7 @@ def selection(pop,s):
         
     return np.array(mating_pool)
 
-def crossover(parents_list, pop_size):
+def uniform_crossover(parents_list, pop_size):
     # TODO return list of the new offspring
     children = []
     for z in range(pop_size):
@@ -113,6 +113,28 @@ def crossover(parents_list, pop_size):
 
         new_genome = Genome(child)
         children.append(new_genome)
+    children = np.array(children)
+
+    return children
+
+def one_point_crossover(parents_list,pop_size):
+    children = []
+    for i in range(pop_size):
+        while True:
+            parent1_idx = random.randint(0, len(parents_list) - 1)
+            parent2_idx = random.randint(0, len(parents_list) - 1)
+            if parent1_idx != parent2_idx:
+                break
+
+        parent1 = parents_list[parent1_idx].value
+        parent2 = parents_list[parent2_idx].value
+
+        point = random.randrange(1,len(parents_list[0].value)-1)
+
+        child = np.concatenate((parent1[:point],parent2[point:]))
+        new_genome = Genome(child)
+        children.append(new_genome)
+
     children = np.array(children)
 
     return children
@@ -195,7 +217,7 @@ if __name__=="__main__":
         save_fitness(save_txt_handle, pop)
 
         selected_parents = selection(pop,s)
-        offspring = crossover(selected_parents, pop_size=pop_size)
+        offspring = one_point_crossover(selected_parents, pop_size=pop_size)
         pop = mutate(offspring,mut_rate,mean,sigma)
 
         # saving system
