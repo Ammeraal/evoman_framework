@@ -161,9 +161,58 @@ def one_point_crossover(parents_list,pop_size):
         children.append(new_genome)
 
     children = np.array(children)
+    print(children)
 
     return children
 
+def multi_parent_crossover(parents_list, pop_size, nr_parents):
+    children = []
+    
+    for z in range(pop_size):
+        parents_idx = set()
+        parents = []
+        points = []
+        # print('parents_list is long: ',len(parents_list))
+        while True:
+            parents_idx.add(random.randint(0,len(parents_list) - 1))
+            if len(parents_idx) == nr_parents:
+                break
+        # print(parents_idx)
+        for idx in parents_idx:
+            parents.append(parents_list[idx].value)
+        # print(len(parents))
+        while True:
+            point = random.randrange(1,len(parents_list[0].value) -1)
+            if point not in points:
+                points.append(point)
+            if len(points) == (nr_parents - 1):
+                break
+
+        points.sort()
+
+        for k in range(nr_parents-1):
+            # print(points[k])
+            # print(points[k+1])
+            # print(parents[0][:points[k]])
+            # print()
+            # print(parents[points[k]:points[k+1]])
+            if k == 0:
+                child = np.concatenate((parents[k][:points[k]],parents[k+1][points[k]:points[k+1]]))
+            elif k == (nr_parents - 2):
+                child = np.concatenate((child,parents[k+1][points[k]:]))
+            else:
+                child = np.concatenate((child,parents[k+1][points[k]:points[k+1]]))
+            # print('length of child is: ',len(child))
+        new_genome = Genome(child)
+        # print(new_genome.value)
+        children.append(new_genome)
+    
+    children = np.array(children)
+    # print(children)
+    # children = np.squeeze(children)
+    # print()
+    # print(children)
+    return children     
 
 def save_fitness(file_handle, pop):
     print("saving pop to file")
@@ -260,7 +309,7 @@ if __name__=="__main__":
         save_fitness(save_txt_handle, pop)
 
         selected_parents = selection(pop,s)
-        offspring = one_point_crossover(selected_parents, pop_size=pop_size)
+        offspring = multi_parent_crossover(selected_parents, pop_size=pop_size,nr_parents = 4)
         pop = mutate(offspring,mut_rate,mean,sigma)
 
         # saving system
