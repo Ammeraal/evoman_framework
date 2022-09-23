@@ -80,20 +80,9 @@ class EvoEAEstimator(BaseEstimator):
     def threaded_evaluation(self, population):
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # We submit the list of the seconds we want to have.
-            # TODO insert list of all genomes
 
             results = executor.map(self.threaded_evaluation_fittness, population)
             return list(results)
-
-    def evaluate_fitness_factory(self, game):
-        def evaluate_fitness(pop):
-            # TODO trigger game with all net configs
-            # TODO parallelize
-            for g in pop:
-                g.fitness = 0.0
-                g.fitness, p, e, t = game.play(pcont=g.value)
-
-        return evaluate_fitness
 
     def selection(self, pop, s):
         p = []
@@ -118,7 +107,7 @@ class EvoEAEstimator(BaseEstimator):
                 r = r + 1 / z
                 current_member += 1
                 break
-            i += 1
+            i += 1      # TODO this causes an error! is this part of the function even correct??
         return np.array(mating_pool)
 
     def uniform_crossover(self, parents_list, pop_size):
@@ -236,9 +225,6 @@ class EvoEAEstimator(BaseEstimator):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        game = GameManager(controller=player_controller(n_hidden))
-        evaluate_fitness = self.evaluate_fitness_factory(game)
-
         # initialization
         if not load_pop:
             pop = self.init_population(pop_size=pop_size, _n_hidden=n_hidden)
@@ -248,12 +234,19 @@ class EvoEAEstimator(BaseEstimator):
             pop = self.load_population(f"{save_dir}pop_{load_generation}.npy")
             save_txt_handle = open(f"{save_dir}fitness.csv", "a")
 
+        self.best_fitness = -100
         # evaluation
         # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
         for i in range(load_generation + 1, generations):
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, self.diversity(pop)))
             start = time.perf_counter()
             pop = self.threaded_evaluation(pop)
+
+            # save best fitness
+            all_fitness = np.array([g.fitness for g in pop])
+            local_max = np.max(all_fitness)
+            if local_max > self.best_fitness:
+                self.best_fitness = local_max
 
             self.save_fitness(save_txt_handle, pop)
 
@@ -273,13 +266,11 @@ class EvoEAEstimator(BaseEstimator):
         print("all done!")
         save_txt_handle.close()
 
-        all_fitness = np.array([g.fitness for g in pop])
-        self.fitness = np.max(all_fitness)
         return self
 
     def score(self, X, y):
         # TODO dunno how this works
-        return self.fitness
+        return self.best_fitness
 
     def get_params(self, deep=True):
         # this returns a dict of all input constants of this estimator
