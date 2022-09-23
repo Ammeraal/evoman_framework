@@ -69,13 +69,15 @@ def threaded_evaluation(population):
         # We submit the list of the seconds we want to have.
         # TODO insert list of all genomes
 
-        executor.map(threaded_evaluation_fittness, population)
+        results = executor.map(threaded_evaluation_fittness, population)
+        return list(results)
 
 
 def threaded_evaluation_fittness(g):
     game = GameManager(controller=player_controller(n_hidden))
     g.fitness = 0.0
     g.fitness, p, e, t = game.play(pcont=g.value)
+    return g
 
 
 
@@ -304,7 +306,7 @@ if __name__=="__main__":
     for i in range(load_generation + 1, generations):
         print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, diversity(pop)))
         start = time.perf_counter()
-        threaded_evaluation(pop)
+        pop = threaded_evaluation(pop)
 
         save_fitness(save_txt_handle, pop)
 

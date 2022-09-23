@@ -71,17 +71,19 @@ class EvoEAEstimator(BaseEstimator):
             pop_offspring.append(Genome(np.array(offspring)))
         return np.array(pop_offspring)
 
+    def threaded_evaluation_fittness(self, g):
+        game = GameManager(controller=player_controller(self.n_hidden))
+        g.fitness = 0.0
+        g.fitness, p, e, t = game.play(pcont=g.value)
+        return g
+
     def threaded_evaluation(self, population):
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # We submit the list of the seconds we want to have.
             # TODO insert list of all genomes
 
-            executor.map(self.threaded_evaluation_fittness, population)
-
-    def threaded_evaluation_fittness(self, g):
-        game = GameManager(controller=player_controller(self.n_hidden))
-        g.fitness = 0.0
-        g.fitness, p, e, t = game.play(pcont=g.value)
+            results = executor.map(self.threaded_evaluation_fittness, population)
+            return list(results)
 
     def evaluate_fitness_factory(self, game):
         def evaluate_fitness(pop):
@@ -251,7 +253,7 @@ class EvoEAEstimator(BaseEstimator):
         for i in range(load_generation + 1, generations):
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, self.diversity(pop)))
             start = time.perf_counter()
-            self.threaded_evaluation(pop)
+            pop = self.threaded_evaluation(pop)
 
             self.save_fitness(save_txt_handle, pop)
 
