@@ -101,10 +101,10 @@ class EvoEAEstimator(BaseEstimator):
         # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
         current_member = i = 1
         r = np.random.uniform(0, 1 / z)
-        while current_member <= z:
+        while current_member < z:
             while r <= p[i]:
                 mating_pool.append(pop[i])
-                r = r + 1 / z
+                r += 1 / z
                 current_member += 1
                 break
             i += 1      # TODO this causes an error! is this part of the function even correct??

@@ -73,7 +73,7 @@ def threaded_evaluation(population):
         return list(results)
 
 
-def threaded_evaluation_fittness(g):
+def threaded_evaluation_fittness(g,n_hidden=0): # TODO pass n_hidden to this function in threated_evaluation
     game = GameManager(controller=player_controller(n_hidden))
     g.fitness = 0.0
     g.fitness, p, e, t = game.play(pcont=g.value)
@@ -106,14 +106,14 @@ def selection(pop,s):
         p.append((2-s)/z + (2*i*(s-1))/(z*(z-1)))
     
     # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
-    current_member=i=1
+    current_member = 1
+    i = 0
     r=np.random.uniform(0,1/z)
-    while current_member<=z:
+    while current_member<z:
         while r<=p[i]:
             mating_pool.append(pop[i])
             r=r+1/z
             current_member+=1
-            break
         i+=1
     return np.array(mating_pool)
 
@@ -271,7 +271,7 @@ def visualize(file):
 if __name__=="__main__":
     # Hyper params
     pop_size = 20
-    generations = 100
+    generations = 10
     n_hidden = 0
     s = 2               # used in formula to allocate selection probabilities
     mut_rate = 0.2
