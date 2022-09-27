@@ -34,57 +34,47 @@ class Crossover():
 
 class UniformCrossover(Crossover):
     members = []
-
     def cross(self, parents_list, pop_size):
-        children = []
-        for z in range(pop_size):
-            while True:
-                parent1_idx = random.randint(0, len(parents_list) - 1)
-                parent2_idx = random.randint(0, len(parents_list) - 1)
-                # hotfix by paddy: I guess the idea is to choose two different parents
-                if parent1_idx != parent2_idx:
-                    break
+        while True:
+            parent1_idx = random.randint(0, len(parents_list) - 1)
+            parent2_idx = random.randint(0, len(parents_list) - 1)
+            # hotfix by paddy: I guess the idea is to choose two different parents
+            if parent1_idx != parent2_idx:
+                break
 
-            parent1 = parents_list[parent1_idx].value
-            parent2 = parents_list[parent2_idx].value
-            child = []
-            for i in range(len(parent1)):
-                bool = random.getrandbits(1)
-                if bool == 1:
-                    child.append(parent1[i])
-                else:
-                    child.append(parent2[i])
+        parent1 = parents_list[parent1_idx].value
+        parent2 = parents_list[parent2_idx].value
+        child = []
+        for i in range(len(parent1)):
+            bool = random.getrandbits(1)
+            if bool == 1:
+                child.append(parent1[i])
+            else:
+                child.append(parent2[i])
 
-            new_genome = Genome(child)
-            children.append(new_genome)
-        children = np.array(children)
-        return children
+        new_genome = Genome(child)
+        return new_genome
 
 
 class OnePointCrossover(Crossover):
     #Member - elitism
-    members = ["elitism"]
-
+    members = []
     def cross(self, parents_list, pop_size):
-        children = []
-        elitism = self.elitism
-        for i in range(pop_size - elitism):
-            while True:
-                parent1_idx = random.randint(0, len(parents_list) - 1)
-                parent2_idx = random.randint(0, len(parents_list) - 1)
-                if parent1_idx != parent2_idx:
-                    break
+        while True:
+            parent1_idx = random.randint(0, len(parents_list) - 1)
+            parent2_idx = random.randint(0, len(parents_list) - 1)
+            if parent1_idx != parent2_idx:
+                break
 
-            parent1 = parents_list[parent1_idx].value
-            parent2 = parents_list[parent2_idx].value
+        parent1 = parents_list[parent1_idx].value
+        parent2 = parents_list[parent2_idx].value
 
-            point = random.randrange(1, len(parents_list[0].value)-1)
+        point = random.randrange(1, len(parents_list[0].value)-1)
 
-            child = np.concatenate((parent1[:point], parent2[point:]))
-            new_genome = Genome(child)
-            children.append(new_genome)
-        children = np.array(children)
-        return children
+        child = np.concatenate((parent1[:point], parent2[point:]))
+        new_genome = Genome(child)
+        return new_genome
+
 
 
 class MultiParentCrossover(Crossover):
@@ -93,51 +83,36 @@ class MultiParentCrossover(Crossover):
 
     def cross(self, parents_list, pop_size):
         nr_parents = self.nr_parents
-        children = []
-        for z in range(pop_size):
-            parents_idx = set()
-            parents = []
-            points = []
-            # print('parents_list is long: ',len(parents_list))
-            while True:
-                parents_idx.add(random.randint(0, len(parents_list) - 1))
-                if len(parents_idx) == nr_parents:
-                    break
-            # print(parents_idx)
-            for idx in parents_idx:
-                parents.append(parents_list[idx].value)
-            # print(len(parents))
-            while True:
-                point = random.randrange(1, len(parents_list[0].value) - 1)
-                if point not in points:
-                    points.append(point)
-                if len(points) == (nr_parents - 1):
-                    break
-            points.sort()
-            for k in range(nr_parents-1):
-                # print(points[k])
-                # print(points[k+1])
-                # print(parents[0][:points[k]])
-                # print()
-                # print(parents[points[k]:points[k+1]])
-                if k == 0:
-                    child = np.concatenate(
-                        (parents[k][:points[k]], parents[k+1][points[k]:points[k+1]]))
-                elif k == (nr_parents - 2):
-                    child = np.concatenate((child, parents[k+1][points[k]:]))
-                else:
-                    child = np.concatenate(
-                        (child, parents[k+1][points[k]:points[k+1]]))
-                # print('length of child is: ',len(child))
-            new_genome = Genome(child)
-            # print(new_genome.value)
-            children.append(new_genome)
-        children = np.array(children)
-        # print(children)
-        # children = np.squeeze(children)
-        # print()
-        # print(children)
-        return children
+        parents_idx = set()
+        parents = []
+        points = []
+        # print('parents_list is long: ',len(parents_list))
+        while True:
+            parents_idx.add(random.randint(0, len(parents_list) - 1))
+            if len(parents_idx) == nr_parents:
+                break
+        # print(parents_idx)
+        for idx in parents_idx:
+            parents.append(parents_list[idx].value)
+        # print(len(parents))
+        while True:
+            point = random.randrange(1, len(parents_list[0].value) - 1)
+            if point not in points:
+                points.append(point)
+            if len(points) == (nr_parents - 1):
+                break
+        points.sort()
+        for k in range(nr_parents-1):
+            if k == 0:
+                child = np.concatenate(
+                    (parents[k][:points[k]], parents[k+1][points[k]:points[k+1]]))
+            elif k == (nr_parents - 2):
+                child = np.concatenate((child, parents[k+1][points[k]:]))
+            else:
+                child = np.concatenate(
+                    (child, parents[k+1][points[k]:points[k+1]]))
+        new_genome = Genome(child)
+        return new_genome
 
 
 class Mutation():
@@ -353,6 +328,16 @@ class SpecialistSolutionV2():
         self.pop = pop
         return save_txt_handle
 
+    def next_generation(self,pop_size):
+        offspring = []
+        elitism = self.elitism
+        selected_parents = self.selection_algorithm.select(self.pop)
+        for i in range(pop_size - elitism):
+            new_genome = self.cross_algorithm.cross(selected_parents)
+            offspring.append(new_genome)
+        offspring = np.array(offspring)
+        self.pop = self.mutation_algorithm.mutate(offspring)
+
     def run(self, generations, pop_size, save_txt_handle, div_file):
         max_fitness = -10
         for i in range(self.load_generation + 1, generations):
@@ -361,23 +346,19 @@ class SpecialistSolutionV2():
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i,
                                                                                          self.diversity(self.pop)))
             start_t = time.perf_counter()
-            pop = self.threaded_evaluation(self.pop, self.n_hidden)
+            self.pop = self.threaded_evaluation(self.pop, self.n_hidden)
 
             # save best fitness
-            local_max = np.max(np.array([g.fitness for g in pop]))
+            local_max = np.max(np.array([g.fitness for g in self.pop]))
             if local_max > max_fitness:
                 max_fitness = local_max
 
             self.save_fitness(save_txt_handle, self.pop)
-
-            selected_parents = self.selection_algorithm.select(pop)
-            offspring = self.cross_algorithm.cross(
-                selected_parents, pop_size=pop_size)
-            self.pop = self.mutation_algorithm.mutate(offspring)
+            self.next_generation()
 
             # saving system
             if i % self.save_interval == 0:
-                self.save_population(f"{self.save_dir}pop_{i}", pop)
+                self.save_population(f"{self.save_dir}pop_{i}", self.pop)
 
             end = time.perf_counter()
             print("execution for one generation took: {} sec".format(end-start_t))
