@@ -354,14 +354,19 @@ class SpecialistSolutionV2():
 
     def next_generation(self,pop_size):
         offspring = []
-        elitism = self.elitism
+
+        # standard crossover
         selected_parents = self.selection_algorithm.select(self.pop)
-        for i in range(pop_size - elitism):
+        for i in range(pop_size - self.elitism):
             new_genome = self.cross_algorithm.cross(selected_parents, pop_size=pop_size)
             offspring.append(new_genome)
         offspring = np.array(offspring)
-        elite_parents=sorted(selected_parents,key = lambda x: x.fitness)[0:elitism]
-        next_gen=np.append(offspring,elite_parents)
+
+        # elitism
+        elite_parents = sorted(self.pop, key=lambda x: x.fitness)[(self.elitism+1)*-1:-1]
+        next_gen = np.append(offspring, elite_parents)
+
+        # mutation
         self.pop = self.mutation_algorithm.mutate(next_gen)
 
     def run(self, generations, pop_size, save_txt_handle, div_file):
