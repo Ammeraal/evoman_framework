@@ -93,28 +93,30 @@ class SpecialistSolutionV2():
 
     def selection(self, pop, s):
         p = []
-        mating_pool = []
-        fitness = []
-
+        mating_pool=[]
+        fitness=[]
+        
         # assess the probability of offspring for each individual (5.2.2 Ranking selection)
-        z = round(len(pop) / 4)  # number of parents
+        z=round(len(pop)/4) # number of parents
         for g in pop:
             fitness.append(g.fitness)
         order = np.argsort(fitness)
         ranks = np.argsort(order)
         for i in ranks:
-            p.append((2 - s) / z + (2 * i * (s - 1)) / (z * (z - 1)))
-
+            p.append((2-s)/z + (2*i*(s-1))/(z*(z-1)))
+        order=np.argsort(p)
+        p=sorted(p/max(p))
         # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
         current_member = 1
         i = 0
-        r = np.random.uniform(0, 1 / z)
-        while current_member < z:
-            while r <= p[i]:
-                mating_pool.append(pop[i])
-                r = r + 1 / z
-                current_member += 1
-            i += 1
+        r=np.random.uniform(0,1/z)
+        while current_member<=z:
+            while r<=p[i]:
+                mating_pool.append(pop[order[i]])
+                r=r+1/z
+                current_member+=1
+                i+=1
+            i+=1
         return np.array(mating_pool)
 
     def uniform_crossover(self, parents_list, pop_size):
