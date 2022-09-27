@@ -31,7 +31,7 @@ class GameManager():
             os.makedirs(experiment_name)
         # initializes simulation in individual evolution mode, for single static enemy.
         env = Environment(experiment_name=experiment_name,
-                          enemies=[2],
+                          enemies=[1],
                           playermode="ai",
                           player_controller=controller,
                           enemymode="static",
