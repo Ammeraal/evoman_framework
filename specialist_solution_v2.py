@@ -202,8 +202,8 @@ class NaiveSelection(Selection):
         r = np.random.uniform(0, 1/z)
         while current_member <= z:
             if i > len(p):
-                mating_pool.append(pop[order[i]])            
-            else:    
+                mating_pool.append(pop[order[i]])
+            else:
                 while r <= p[i]:
                     mating_pool.append(pop[order[i]])
                     r = r+1/z
@@ -216,8 +216,8 @@ class NaiveSelection(Selection):
 class SpecialistSolutionV2():
     def __init__(self):
         self.current_generation = 0
-        self.cross_algorithm = MultiParentCrossover(nr_parents=3)
-        self.mutation_algorithm = GaussianMutation(mean=0, stdv=0.25)
+        self.cross_algorithm = MultiParentCrossover(nr_parents=2)
+        self.mutation_algorithm = GaussianMutation(mean=0, stdv=1.0)
         self.selection_algorithm = RankingSelection(s=2.0)
         self.save_interval = 10
         self.load_pop = False
@@ -310,6 +310,21 @@ class SpecialistSolutionV2():
         print("loading initial population for {}".format(path))
         return np.load(path, allow_pickle=True)
 
+    def fitness_boxplot(self, file, generations):
+        print(file)
+        df = pd.read_csv(file, header=None, sep=" ").iloc[:, :-1]
+        na = np.array(df)
+        r = [(gix,gval) for gix,gen in enumerate(na) for gval in gen]
+        x = [left for left,right in r]
+        y = [right for left,right in r]
+        plt.figure(figsize=(8,4)), plt.scatter(x,y,s = 0.2)
+        plt.boxplot(na.transpose())
+        plt.plot(list(map(np.max,na)))
+        plt.plot(list(map(np.mean,na)))
+        plt.plot(list(map(np.std,na)))
+        print(df)
+        return
+
     def visualize(self, file, generations):
         # make plot of mean fitness over generations, with standard deviation
         # TODO mean should average over 10 runs!! for now this is just one run
@@ -352,6 +367,9 @@ class SpecialistSolutionV2():
         self.pop = pop
         return save_txt_handle
 
+    def update_algorithms(self):
+        pass
+
     def next_generation(self,pop_size):
         offspring = []
 
@@ -368,6 +386,8 @@ class SpecialistSolutionV2():
 
         # mutation
         self.pop = self.mutation_algorithm.mutate(next_gen)
+        self.current_generation += 1
+        self.update_algorithms()
 
     def run(self, generations, pop_size, save_txt_handle, div_file):
         max_fitness = -10
