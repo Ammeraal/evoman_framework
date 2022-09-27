@@ -336,7 +336,9 @@ class SpecialistSolutionV2():
             new_genome = self.cross_algorithm.cross(selected_parents)
             offspring.append(new_genome)
         offspring = np.array(offspring)
-        self.pop = self.mutation_algorithm.mutate(offspring)
+        elite_parents=sorted(selected_parents,key = lambda x: x.fitness)[0:elitism]
+        next_gen=np.append(offspring,elite_parents)
+        self.pop = self.mutation_algorithm.mutate(next_gen)
 
     def run(self, generations, pop_size, save_txt_handle, div_file):
         max_fitness = -10
