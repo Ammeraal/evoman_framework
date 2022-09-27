@@ -6,7 +6,7 @@ from Genome import Genome
 from game_setup_solution import GameManager
 from demo_controller import player_controller
 import os
-
+import seaborn as sns
 import time
 import concurrent.futures
 import multiprocessing
@@ -223,6 +223,11 @@ def save_fitness(file_handle, pop):
     np.savetxt(file_handle, np.array(fitness_values), newline=" ")
     file_handle.write("\n")
 
+def save_diversity(file_handle, div):
+    print("saving pop diversity to file")
+
+    file_handle.write(str(div) + "\n")
+
 
 def diversity(pop):
     """
@@ -266,7 +271,17 @@ def visualize(file):
     plt.xlabel("Generation")
     plt.ylabel("Fitness")
     plt.fill_between(range(generations), df_avg - df_std, df_avg + df_std, alpha=.3)
-    plt.savefig("avg_lineplot.png")
+    plt.xlim(-6)
+    plt.savefig(f"{save_dir}avg_lineplot.png")
+    plt.clf()
+
+def diversity_plot(file):
+    df = pd.read_csv(file, header=None)
+    plt.plot(df)
+    plt.xlabel("Generation")
+    plt.ylabel("Diversity")
+    plt.savefig(f"{save_dir}diversity_plot.png")
+    plt.clf()
 
 if __name__=="__main__":
     # Hyper params
@@ -291,6 +306,7 @@ if __name__=="__main__":
 
     game = GameManager(controller=player_controller(n_hidden))
     evaluate_fitness = evaluate_fitness_factory(game)
+    div_file = open(f"{save_dir}diversity.csv", "w")
 
     # initialization
     if not load_pop:
@@ -304,6 +320,8 @@ if __name__=="__main__":
     # evaluation
     # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
     for i in range(load_generation + 1, generations):
+        div = diversity(pop)
+        save_diversity(div_file, div)
         print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, diversity(pop)))
         start = time.perf_counter()
         pop = threaded_evaluation(pop, n_hidden)
@@ -325,5 +343,7 @@ if __name__=="__main__":
     # TODO implement early stopping
     print("all done!")
     save_txt_handle.close()
+    div_file.close()
     print("visualizing and saving results...")
-    visualize("specialist_solution_v2/test1/fitness.csv")
+    visualize(f"{save_dir}fitness.csv")
+    diversity_plot(f"{save_dir}diversity.csv")
