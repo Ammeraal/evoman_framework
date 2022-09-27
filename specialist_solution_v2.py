@@ -159,6 +159,25 @@ class Selection():
     pass
 
 
+class RankingSelection(Selection):
+    def __init__(self, s=2.0):
+        self.s = 2.0
+
+    def select(self, pop):
+        mu = len(pop)        #round(len(sorted_pop) / 4)     # number of parents (as fraction of the population)
+
+        # sort population by their fitness
+        sorted_pop = np.array(sorted(pop, key=lambda p: p.fitness))
+
+        # generate p_s
+        p = []              # each element of the list is the probability for an element in sorted_pop to be selected
+        for i in range(len(sorted_pop)):
+            p.append((2 - self.s) / mu + (2 * i * (self.s - 1)) / (mu * (mu - 1)))
+
+        # select pool based on p_s
+        mating_pool = np.random.choice(sorted_pop, mu, replace=True, p=np.array(p))
+        return mating_pool
+
 class NaiveSelection(Selection):
     def __init__(self, s=2.0):
         self.s = 2.0
@@ -199,7 +218,7 @@ class SpecialistSolutionV2():
         self.current_generation = 0
         self.cross_algorithm = MultiParentCrossover(nr_parents=3)
         self.mutation_algorithm = GaussianMutation(mean=0, stdv=0.25)
-        self.selection_algorithm = NaiveSelection(s=2.0)
+        self.selection_algorithm = RankingSelection(s=2.0)
         self.save_interval = 10
         self.load_pop = False
         self.load_generation = 4
@@ -338,7 +357,7 @@ class SpecialistSolutionV2():
         elitism = self.elitism
         selected_parents = self.selection_algorithm.select(self.pop)
         for i in range(pop_size - elitism):
-            new_genome = self.cross_algorithm.cross(selected_parents)
+            new_genome = self.cross_algorithm.cross(selected_parents, pop_size=pop_size)
             offspring.append(new_genome)
         offspring = np.array(offspring)
         elite_parents=sorted(selected_parents,key = lambda x: x.fitness)[0:elitism]
@@ -371,7 +390,7 @@ class SpecialistSolutionV2():
             print("execution for one generation took: {} sec".format(end-start_t))
         return max_fitness
 
-    def start(self, generations=30, pop_size=50,
+    def start(self, generations=30, pop_size=20,
               experiment_name="test", generate_plots=True):
         # TODO set all hyper params
         # Hyper params
