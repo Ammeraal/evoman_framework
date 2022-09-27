@@ -55,6 +55,23 @@ class UniformCrossover(Crossover):
         new_genome = Genome(child)
         return new_genome
 
+class FractionalCrossover(Crossover):
+    member=[]
+    def cross(self,parents_list):
+        while True:
+            parent1_idx = random.randint(0, len(parents_list) - 1)
+            parent2_idx = random.randint(0, len(parents_list) - 1)
+            if parent1_idx != parent2_idx:
+                break
+
+        parent1 = parents_list[parent1_idx].value
+        parent2 = parents_list[parent2_idx].value
+
+        fraction = random.uniform(0,1)
+        child = fraction * parents_list + (1-fraction) * parents_list
+
+        return Genome(child)
+
 
 class OnePointCrossover(Crossover):
     #Member - elitism
