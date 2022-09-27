@@ -179,14 +179,18 @@ class NaiveSelection(Selection):
         p = sorted(p/max(p))
         # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
         current_member = 1
+        i = 0
         r = np.random.uniform(0, 1/z)
         while current_member <= z:
-            while r <= p[i]:
-                mating_pool.append(pop[order[i]])
-                r = r+1/z
-                current_member += 1
-                i += 1
+            if i > len(p):
+                mating_pool.append(pop[order[i]])            
+            else:    
+                while r <= p[i]:
+                    mating_pool.append(pop[order[i]])
+                    r = r+1/z
+                    current_member += 1
             i += 1
+
         return np.array(mating_pool)
 
 
@@ -200,6 +204,7 @@ class SpecialistSolutionV2():
         self.load_pop = False
         self.load_generation = 4
         self.n_hidden = 0
+        self.elitism = elitism = 2
 
     def init_population(self, pop_size, _n_hidden):
         # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
@@ -356,7 +361,7 @@ class SpecialistSolutionV2():
                 max_fitness = local_max
 
             self.save_fitness(save_txt_handle, self.pop)
-            self.next_generation()
+            self.next_generation(pop_size)
 
             # saving system
             if i % self.save_interval == 0:
@@ -366,7 +371,7 @@ class SpecialistSolutionV2():
             print("execution for one generation took: {} sec".format(end-start_t))
         return max_fitness
 
-    def start(self, generations=10, pop_size=20,
+    def start(self, generations=30, pop_size=50,
               experiment_name="test", generate_plots=True):
         # TODO set all hyper params
         # Hyper params
