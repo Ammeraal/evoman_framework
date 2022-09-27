@@ -55,6 +55,61 @@ class UniformCrossover(Crossover):
         new_genome = Genome(child)
         return new_genome
 
+class MatrixCrossover(Crossover):
+    members = []
+
+    def _genome_to_matrix(self, value):
+        num_input = 20
+        num_output = 5
+        # TODO implement for hidden layer as well
+        bias = value[:num_output]
+        weights = value[num_output:].reshape((num_input, num_output))
+
+        return weights, bias
+
+    def _matrix_to_genome(self, weights, bias):
+        # TODO implement for hidden layer as well
+        value = np.concatenate((bias, weights.flatten()))
+
+        return value
+
+
+    def cross(self, parent_list, pop_size):
+        group_input_weights = True
+        # TODO implement for multiple parents
+        # create matrix
+        parents = np.random.choice(parent_list, size=2, replace=False)
+        biases = []
+        weights = []
+        for p in parents:
+            weight, bias = self._genome_to_matrix(p.value)
+            biases.append(bias)
+            weights.append(weight)
+
+        # change rows
+        offspring_weight = np.ones_like(weights[0])
+        offspring_bias = np.ones_like(biases[0])
+
+        # loop over rows
+        if group_input_weights:
+            for i in range(np.shape(offspring_weight)[0]):
+                parent_idx = np.random.randint(0, len(parents))
+                offspring_weight[i,:] = weights[parent_idx][i,:]      # transfer the i'th column of the sampled parent
+        else:
+            # loop over cols
+            for i in range(np.shape(offspring_weight)[1]):
+                parent_idx = np.random.randint(0, len(parents))
+                offspring_weight[:,i] = weights[parent_idx][:,i]      # transfer the i'th row of the sampled parent
+
+        # loop over colls for bias
+        for i in range(len(offspring_bias)):
+            parent_idx = np.random.randint(0, len(parents))
+            offspring_bias[i] = biases[parent_idx][i]
+
+        # flatten matrix to vector
+        vector = self._matrix_to_genome(offspring_weight, offspring_bias)
+        return Genome(vector)
+
 
 class OnePointCrossover(Crossover):
     #Member - elitism
@@ -87,13 +142,18 @@ class MultiParentCrossover(Crossover):
         parents = []
         points = []
         # print('parents_list is long: ',len(parents_list))
-        while True:
-            parents_idx.add(random.randint(0, len(parents_list) - 1))
-            if len(parents_idx) == nr_parents:
-                break
+        # select list of crossing parents
+        crossing_pool = np.random.choice(parents_list, nr_parents, replace=False)
+
+        #while True:
+        #    parents_idx.add(random.randint(0, len(parents_list) - 1))
+        #    if len(parents_idx) == nr_parents:
+        #        break
         # print(parents_idx)
-        for idx in parents_idx:
-            parents.append(parents_list[idx].value)
+        #for idx in parents_idx:
+        #    parents.append(parents_list[idx].value)
+
+        parents = [p.value for p in crossing_pool]
         # print(len(parents))
         while True:
             point = random.randrange(1, len(parents_list[0].value) - 1)
@@ -116,8 +176,8 @@ class MultiParentCrossover(Crossover):
 
 
 class Mutation():
-    def __init__(self):
-        pass
+    def __init__(self, mutation_rate):
+        self.mutation_rate = mutation_rate
 
     def mutate(self, population):
         pop_offspring = []
@@ -142,9 +202,9 @@ class Mutation():
 
 class GaussianMutation(Mutation):
     def __init__(self, mean=0, stdv=0.25, mutation_rate=0.2):
+        super().__init__(mutation_rate=mutation_rate)
         self.mean = mean
         self.stdv = stdv
-        self.mutation_rate = mutation_rate
 
     def mutate_gene(self, gene):
         w = gene + np.random.normal(self.mean, self.stdv)
@@ -154,6 +214,12 @@ class GaussianMutation(Mutation):
             w = -1
         return w
 
+class UniformMutation(Mutation):
+    def __init__(self, mutation_rate=0.2):
+        super().__init__(mutation_rate=mutation_rate)
+
+    def mutate_gene(self, gene):
+        return np.random.uniform(-1, 1)
 
 class Selection():
     pass
@@ -161,7 +227,7 @@ class Selection():
 
 class RankingSelection(Selection):
     def __init__(self, s=2.0):
-        self.s = 2.0
+        self.s = s
 
     def select(self, pop):
         mu = len(pop)        #round(len(sorted_pop) / 4)     # number of parents (as fraction of the population)
@@ -176,6 +242,7 @@ class RankingSelection(Selection):
 
         # select pool based on p_s
         mating_pool = np.random.choice(sorted_pop, mu, replace=True, p=np.array(p))
+
         return mating_pool
 
 class NaiveSelection(Selection):
@@ -216,12 +283,12 @@ class NaiveSelection(Selection):
 class SpecialistSolutionV2():
     def __init__(self):
         self.current_generation = 0
-        self.cross_algorithm = MultiParentCrossover(nr_parents=2)
-        self.mutation_algorithm = GaussianMutation(mean=0, stdv=1.0)
+        self.cross_algorithm = MatrixCrossover()      #MultiParentCrossover(nr_parents=3)
+        self.mutation_algorithm = GaussianMutation(mutation_rate=0.05)        #UniformMutation(mutation_rate=0.01)
         self.selection_algorithm = RankingSelection(s=2.0)
         self.save_interval = 10
         self.load_pop = False
-        self.load_generation = 4
+        self.load_generation = 20
         self.n_hidden = 0
         self.elitism = elitism = 2
 
@@ -380,12 +447,13 @@ class SpecialistSolutionV2():
             offspring.append(new_genome)
         offspring = np.array(offspring)
 
+        # mutation
+        offspring = self.mutation_algorithm.mutate(offspring)
+
         # elitism
         elite_parents = sorted(self.pop, key=lambda x: x.fitness)[(self.elitism+1)*-1:-1]
-        next_gen = np.append(offspring, elite_parents)
+        self.pop = np.append(offspring, elite_parents)
 
-        # mutation
-        self.pop = self.mutation_algorithm.mutate(next_gen)
         self.current_generation += 1
         self.update_algorithms()
 
@@ -449,5 +517,5 @@ class SpecialistSolutionV2():
 
 if __name__ == "__main__":
     ea_instance = SpecialistSolutionV2()
-    best_fitness = ea_instance.start()
+    best_fitness = ea_instance.start(generations=30, pop_size=20)
     print("best_fitness: {}".format(best_fitness))
