@@ -68,7 +68,7 @@ class FractionalCrossover(Crossover):
         parent2 = parents_list[parent2_idx].value
 
         fraction = random.uniform(0,1)
-        child = fraction * parents_list + (1-fraction) * parents_list
+        child = fraction * parent1 + (1-fraction) * parent2
 
         return Genome(child)
 
