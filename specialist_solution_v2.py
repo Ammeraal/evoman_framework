@@ -144,7 +144,7 @@ class Mutation():
     def __init__(self):
         pass
 
-    def mutate(self, population, mutation_rate=0.2):
+    def mutate(self, population):
         pop_offspring = []
         for individual in population:
             genome = individual.value
@@ -153,7 +153,7 @@ class Mutation():
                 # draw random probability for mutation
                 mutate = np.random.uniform(0, 1)
                 # if mutation prob is below mutation rate, mutate gene in genome by adding random number
-                if mutate <= mutation_rate:
+                if mutate <= self.mutation_rate:
                     w = self.mutate_gene(gene)
                     offspring.append(w)
                 else:
@@ -166,16 +166,18 @@ class Mutation():
 
 
 class GaussianMutation(Mutation):
-    def __init__(self, mean=0, stdv=0.25):
-        self.mean = 0
-        self.stdv = 0.25
+    def __init__(self, mean=0, stdv=0.25, mutation_rate=0.2):
+        self.mean = mean
+        self.stdv = stdv
+        self.mutation_rate = mutation_rate
 
     def mutate_gene(self, gene):
-        w = gene + np.random.normal(self.mean, self.sigma)
+        w = gene + np.random.normal(self.mean, self.stdv)
         if w > 1:
             w = 1
         elif w < -1:
             w = -1
+        return w
 
 
 class Selection():
@@ -370,8 +372,8 @@ class SpecialistSolutionV2():
 
             selected_parents = self.selection_algorithm.select(pop)
             offspring = self.cross_algorithm.cross(
-                selected_parents, pop_size=pop_size, nr_parents=3)
-            self.pop = self.mutation_algorithm.mutate(offspring, self.mut_rate)
+                selected_parents, pop_size=pop_size)
+            self.pop = self.mutation_algorithm.mutate(offspring)
 
             # saving system
             if i % self.save_interval == 0:
