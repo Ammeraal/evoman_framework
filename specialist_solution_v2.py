@@ -274,7 +274,6 @@ class SpecialistSolutionV2():
                 g.fitness, p, e, t = game.play(pcont=g.value)
 
         return evaluate_fitness
-
     def save_fitness(self, file_handle, pop):
         print("saving pop to file")
 
