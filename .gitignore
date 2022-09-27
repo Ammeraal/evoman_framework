@@ -170,3 +170,4 @@ evoAlgo/
 # project specific
 neat-checkpoint-*
 *_logs.txt
+specialist_solution_v2/*
