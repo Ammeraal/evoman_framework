@@ -64,16 +64,16 @@ def mutate(pop,mut_rate,mean,sigma):
         pop_offspring.append(Genome(np.array(offspring)))
     return np.array(pop_offspring)
 
-def threaded_evaluation(population):
+def threaded_evaluation(population, n_hidden):
     with concurrent.futures.ProcessPoolExecutor() as executor:
         # We submit the list of the seconds we want to have.
         # TODO insert list of all genomes
 
-        results = executor.map(threaded_evaluation_fittness, population)
+        results = executor.map(threaded_evaluation_fittness, population, [n_hidden for i in range(len(population))])
         return list(results)
 
 
-def threaded_evaluation_fittness(g,n_hidden=0): # TODO pass n_hidden to this function in threated_evaluation
+def threaded_evaluation_fittness(g, n_hidden=0): # TODO pass n_hidden to this function in threated_evaluation
     game = GameManager(controller=player_controller(n_hidden))
     g.fitness = 0.0
     g.fitness, p, e, t = game.play(pcont=g.value)
@@ -271,9 +271,9 @@ def visualize(file):
 if __name__=="__main__":
     # Hyper params
     pop_size = 20
-    generations = 10
-    n_hidden = 0
-    s = 2               # used in formula to allocate selection probabilities
+    generations = 50
+    n_hidden = 2
+    s = 1.4               # used in formula to allocate selection probabilities
     mut_rate = 0.2
     mean = 0
     sigma = 0.25
@@ -306,12 +306,12 @@ if __name__=="__main__":
     for i in range(load_generation + 1, generations):
         print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, diversity(pop)))
         start = time.perf_counter()
-        pop = threaded_evaluation(pop)
+        pop = threaded_evaluation(pop, n_hidden)
 
         save_fitness(save_txt_handle, pop)
 
         selected_parents = selection(pop,s)
-        offspring = multi_parent_crossover(selected_parents, pop_size=pop_size,nr_parents = 4)
+        offspring = multi_parent_crossover(selected_parents, pop_size=pop_size,nr_parents = 3)
         pop = mutate(offspring,mut_rate,mean,sigma)
 
         # saving system
