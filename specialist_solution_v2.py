@@ -425,7 +425,7 @@ class SpecialistSolutionV2():
         plt.ylabel("Fitness")
         plt.fill_between(range(generations), df_avg -
                          df_std, df_avg + df_std, alpha=.3)
-        plt.xlim(-6)
+        plt.ylim(-6)
         plt.savefig(f"{self.save_dir}avg_lineplot.png")
         plt.clf()
 
