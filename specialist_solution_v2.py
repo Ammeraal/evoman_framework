@@ -359,10 +359,9 @@ class SpecialistSolutionV2():
                 g.fitness, p, e, t = game.play(pcont=g.value)
 
         return evaluate_fitness
-    def save_fitness(self, file_handle, pop):
+    def save_fitness(self, file_handle, fitness_values):
         print("saving pop to file")
 
-        fitness_values = [p.fitness for p in pop]
         np.savetxt(file_handle, np.array(fitness_values), newline=" ")
         file_handle.write("\n")
 
@@ -386,13 +385,14 @@ class SpecialistSolutionV2():
         # normalize by amount of individual sums
         return similar_sum / ((len(pop)**2 - len(pop)) / 2.)
 
-    def save_population(self, path, pop):
+    def save_population(self, path, pop, generation):
         print("saving population at {}".format(path))
-        np.save(path, pop)
+        np.save(f"{path}.npy", pop)
+        np.savetxt(f"{path}_generation", np.array([generation]))
 
     def load_population(self, path):
         print("loading initial population for {}".format(path))
-        return np.load(path, allow_pickle=True)
+        return np.load(f"{path}.npy", allow_pickle=True), int(np.loadtxt(f"{path}_generation"))
 
     def fitness_boxplot(self, file, generations):
         print(file)
@@ -438,18 +438,26 @@ class SpecialistSolutionV2():
         plt.clf()
 
     def initialize_run(self, pop_size):
+        # TODO load last executed state
+        if os.path.exists(f"{self.save_dir}autosave.npy"):
+            self.load_pop = True
+
         # initialization
         if not self.load_pop:
             pop = self.init_population(
                 pop_size=pop_size, _n_hidden=self.n_hidden)
-            save_txt_handle = open(f"{self.save_dir}fitness.csv", "w")
+            file_open_mode = "w"
             self.load_generation = -1
         else:
-            pop = self.load_population(
-                f"{self.save_dir}pop_{self.load_generation}.npy")
-            save_txt_handle = open(f"{self.save_dir}fitness.csv", "a")
+            #pop = self.load_population(f"{self.save_dir}pop_{self.load_generation}.npy")
+            pop, self.load_generation = self.load_population(f"{self.save_dir}autosave")
+            file_open_mode = "a"
+
+        save_txt_handle = open(f"{self.save_dir}fitness.csv", file_open_mode)
+        div_file = open(f"{self.save_dir}diversity.csv", file_open_mode)
         self.pop = pop
-        return save_txt_handle
+
+        return save_txt_handle, div_file
 
     def update_algorithms(self):
         pass
@@ -478,7 +486,6 @@ class SpecialistSolutionV2():
         max_fitness = -10
         for i in range(self.load_generation + 1, generations):
             div = self.diversity(self.pop)
-            self.save_diversity(div_file, div)
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i,
                                                                                          self.diversity(self.pop)))
             start_t = time.perf_counter()
@@ -489,12 +496,14 @@ class SpecialistSolutionV2():
             if local_max > max_fitness:
                 max_fitness = local_max
 
-            self.save_fitness(save_txt_handle, self.pop)
+            fitness_values = [p.fitness for p in self.pop]      # store them but save them right before the backup
             self.next_generation(pop_size)
 
             # saving system
-            if i % self.save_interval == 0:
-                self.save_population(f"{self.save_dir}pop_{i}", self.pop)
+            #if i % self.save_interval == 0:
+            self.save_fitness(save_txt_handle, fitness_values)
+            self.save_diversity(div_file, self.diversity(self.pop))
+            self.save_population(f"{self.save_dir}autosave", self.pop, i)
 
             end = time.perf_counter()
             print("execution for one generation took: {} sec".format(end-start_t))
@@ -509,9 +518,7 @@ class SpecialistSolutionV2():
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
-        game = GameManager(controller=player_controller(self.n_hidden))
-        div_file = open(f"{self.save_dir}diversity.csv", "w")
-        save_txt_handle = self.initialize_run(pop_size)
+        save_txt_handle, div_file = self.initialize_run(pop_size)
 
         # evaluation
         # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
@@ -536,3 +543,4 @@ if __name__ == "__main__":
     ea_instance = SpecialistSolutionV2()
     best_fitness = ea_instance.start(generations=30, pop_size=20)
     print("best_fitness: {}".format(best_fitness))
+    
