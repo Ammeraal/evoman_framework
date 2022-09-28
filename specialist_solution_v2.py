@@ -440,9 +440,9 @@ class SpecialistSolutionV2():
         plt.savefig(f"{self.save_dir}diversity_plot.png")
         plt.clf()
 
-    def initialize_run(self, pop_size):
+    def initialize_run(self, pop_size, auto_load=True):
         # TODO load last executed state
-        if os.path.exists(f"{self.save_dir}autosave.npy"):
+        if os.path.exists(f"{self.save_dir}autosave.npy") and auto_load:
             self.load_pop = True
 
         # initialization
@@ -517,7 +517,7 @@ class SpecialistSolutionV2():
         return max_fitness
 
     def start(self, generations=30, pop_size=20,
-              experiment_name="test", generate_plots=True):
+              experiment_name="test", generate_plots=True, auto_load=True):
         # TODO set all hyper params
         # Hyper params
 
@@ -525,7 +525,7 @@ class SpecialistSolutionV2():
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
-        save_txt_handle, div_file = self.initialize_run(pop_size)
+        save_txt_handle, div_file = self.initialize_run(pop_size, auto_load)
 
         # evaluation
         # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
@@ -548,6 +548,6 @@ class SpecialistSolutionV2():
 
 if __name__ == "__main__":
     ea_instance = SpecialistSolutionV2()
-    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name="3_matrix_gauss_pressure_more_mut")
+    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name="5_matrix_gauss_pressure_more_mut")
     print("best_fitness: {}".format(best_fitness))
     
