@@ -29,14 +29,13 @@ class EvoEAEstimator(BaseEstimator):
 
     def fit(self, X, y):
         # constants
-        generations = 10
-        pop_size = 20
-        sigma = 0.25      # this is the std deviations used for sampling mutation steps
+        generations = 40
+        pop_size = 40
+        #sigma = 0.25      # this is the std deviations used for sampling mutation steps
         experiment_name = "bayes_search"
 
         ea_instance = SpecialistSolutionV2()
-        self.best_fitness = ea_instance.start(mut_rate=self.mut_rate, s=self.s, n_hidden=self.n_hidden,
-                                              generations=generations, pop_size=pop_size, sigma=sigma,
+        self.best_fitness = ea_instance.start(generations=generations, pop_size=pop_size,
                                               experiment_name=experiment_name, generate_plots=False)
 
         return self
@@ -57,13 +56,13 @@ class EvoEAEstimator(BaseEstimator):
 if __name__ == "__main__":
     # check_estimator(EvoEAEstimator(10, 2.0, 0.2))
 
-    opt = BayesSearchCV(EvoEAEstimator(5, 2.0, 0.2, 2),
+    opt = BayesSearchCV(EvoEAEstimator(n_hidden=0, s=2.0, mut_rate=0.2, elitism=4),
                         {"n_hidden": (0, 5, 10, 15),
                         "s": (1.4, 1.6, 1.8, 2.0),
                         "mut_rate": (0.01, 0.025, 0.05, 0.075),
                         "elitism": (1,2,3,4)
                         },
-                        n_iter=2,
+                        n_iter=10,
                         verbose=3,
                         #cv=3,
                         n_jobs=1

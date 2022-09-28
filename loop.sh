@@ -1,10 +1,10 @@
 #!/bin/bash
 
-experiment_name='individual_demo'
+experiment_name='specialist_solution_test'
 
 while [ ! -f $experiment_name"/neuroended" ]
 do 
-	python optimization_specialist_demo.py
+	python3 specialist_solution_v2.py
 done
 
 exit 0

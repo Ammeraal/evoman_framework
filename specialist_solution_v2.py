@@ -56,7 +56,7 @@ class UniformCrossover(Crossover):
         return new_genome
 
 class MatrixCrossover(Crossover):
-    members = []
+    members = ["nr_parents"]
 
     def _genome_to_matrix(self, value):
         num_input = 20
@@ -78,7 +78,7 @@ class MatrixCrossover(Crossover):
         group_input_weights = True
         # TODO implement for multiple parents
         # create matrix
-        parents = np.random.choice(parent_list, size=2, replace=False)
+        parents = np.random.choice(parent_list, size=self.nr_parents, replace=False)
         biases = []
         weights = []
         for p in parents:
@@ -94,17 +94,17 @@ class MatrixCrossover(Crossover):
         if group_input_weights:
             for i in range(np.shape(offspring_weight)[0]):
                 parent_idx = np.random.randint(0, len(parents))
-                offspring_weight[i,:] = weights[parent_idx][i,:]      # transfer the i'th column of the sampled parent
+                offspring_weight[i,:] = np.copy(weights[parent_idx][i,:])      # transfer the i'th column of the sampled parent
         else:
             # loop over cols
             for i in range(np.shape(offspring_weight)[1]):
                 parent_idx = np.random.randint(0, len(parents))
-                offspring_weight[:,i] = weights[parent_idx][:,i]      # transfer the i'th row of the sampled parent
+                offspring_weight[:,i] = np.copy(weights[parent_idx][:,i])      # transfer the i'th row of the sampled parent
 
         # loop over colls for bias
         for i in range(len(offspring_bias)):
             parent_idx = np.random.randint(0, len(parents))
-            offspring_bias[i] = biases[parent_idx][i]
+            offspring_bias[i] = np.copy(biases[parent_idx][i])
 
         # flatten matrix to vector
         vector = self._matrix_to_genome(offspring_weight, offspring_bias)
@@ -216,6 +216,9 @@ class Mutation():
     def mutate_gene(self, gene):
         return gene
 
+    def set_mutation(self, rate):
+        self.mutation_rate = rate
+
 
 class GaussianMutation(Mutation):
     def __init__(self, mean=0, stdv=0.25, mutation_rate=0.2):
@@ -247,10 +250,10 @@ class RankingSelection(Selection):
         self.s = s
 
     def select(self, pop):
-        mu = len(pop)        #round(len(sorted_pop) / 4)     # number of parents (as fraction of the population)
 
         # sort population by their fitness
         sorted_pop = np.array(sorted(pop, key=lambda p: p.fitness))
+        mu = len(sorted_pop)        #round(len(sorted_pop) / 4)     # number of parents (as fraction of the population)
 
         # generate p_s
         p = []              # each element of the list is the probability for an element in sorted_pop to be selected
@@ -298,16 +301,16 @@ class NaiveSelection(Selection):
 
 
 class SpecialistSolutionV2():
-    def __init__(self):
+    def __init__(self, nr_parents=3, mutation_rate=0.2, s=2.0, n_hidden=0, elitism=4):
         self.current_generation = 0
-        self.cross_algorithm = MatrixCrossover()      #MultiParentCrossover(nr_parents=3)
-        self.mutation_algorithm = GaussianMutation(mutation_rate=0.05)        #UniformMutation(mutation_rate=0.01)
-        self.selection_algorithm = RankingSelection(s=2.0)
+        self.cross_algorithm = MatrixCrossover(nr_parents=nr_parents)      #MultiParentCrossover(nr_parents=3)
+        self.mutation_algorithm = GaussianMutation(mutation_rate=mutation_rate)# UniformMutation(mutation_rate=0.03) #
+        self.selection_algorithm = RankingSelection(s=s)
         self.save_interval = 10
         self.load_pop = False
         self.load_generation = 20
-        self.n_hidden = 0
-        self.elitism = elitism = 2
+        self.n_hidden = n_hidden
+        self.elitism = elitism
 
     def init_population(self, pop_size, _n_hidden):
         # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
@@ -488,6 +491,10 @@ class SpecialistSolutionV2():
             div = self.diversity(self.pop)
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i,
                                                                                          self.diversity(self.pop)))
+            #if div < 30:
+            #    self.mutation_algorithm.set_mutation(0.1)
+            #else:
+            #    self.mutation_algorithm.set_mutation(0.02)
             start_t = time.perf_counter()
             self.pop = self.threaded_evaluation(self.pop, self.n_hidden)
 
@@ -541,6 +548,6 @@ class SpecialistSolutionV2():
 
 if __name__ == "__main__":
     ea_instance = SpecialistSolutionV2()
-    best_fitness = ea_instance.start(generations=30, pop_size=20)
+    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name="3_matrix_gauss_pressure_more_mut")
     print("best_fitness: {}".format(best_fitness))
     
