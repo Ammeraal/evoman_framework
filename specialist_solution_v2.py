@@ -1,3 +1,5 @@
+import sys
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from calendar import c
@@ -13,6 +15,7 @@ import concurrent.futures
 import multiprocessing
 import concurrent.futures
 from tkinter import E
+import copy
 
 start = time.perf_counter()
 
@@ -182,12 +185,12 @@ class MultiParentCrossover(Crossover):
         for k in range(nr_parents-1):
             if k == 0:
                 child = np.concatenate(
-                    (parents[k][:points[k]], parents[k+1][points[k]:points[k+1]]))
+                    (np.copy(parents[k][:points[k]]), np.copy(parents[k+1][points[k]:points[k+1]])))
             elif k == (nr_parents - 2):
-                child = np.concatenate((child, parents[k+1][points[k]:]))
+                child = np.concatenate((child, np.copy(parents[k+1][points[k]:])))
             else:
                 child = np.concatenate(
-                    (child, parents[k+1][points[k]:points[k+1]]))
+                    (child, np.copy(parents[k+1][points[k]:points[k+1]])))
         new_genome = Genome(child)
         return new_genome
 
@@ -303,7 +306,7 @@ class NaiveSelection(Selection):
 class SpecialistSolutionV2():
     def __init__(self, nr_parents=3, mutation_rate=0.2, s=2.0, n_hidden=0, elitism=4):
         self.current_generation = 0
-        self.cross_algorithm = MatrixCrossover(nr_parents=nr_parents)      #MultiParentCrossover(nr_parents=3)
+        self.cross_algorithm = MultiParentCrossover(nr_parents=nr_parents)  #MatrixCrossover(nr_parents=nr_parents)      #MultiParentCrossover(nr_parents=3)
         self.mutation_algorithm = GaussianMutation(mutation_rate=mutation_rate)# UniformMutation(mutation_rate=0.03) #
         self.selection_algorithm = RankingSelection(s=s)
         self.save_interval = 10
@@ -478,7 +481,7 @@ class SpecialistSolutionV2():
         offspring = []
 
         # standard crossover
-        selected_parents = self.selection_algorithm.select(self.pop)
+        selected_parents = copy.deepcopy(self.selection_algorithm.select(self.pop))
         for i in range(pop_size - self.elitism):
             new_genome = self.cross_algorithm.cross(selected_parents, pop_size=pop_size)
             offspring.append(new_genome)
@@ -561,7 +564,13 @@ class SpecialistSolutionV2():
 
 
 if __name__ == "__main__":
+    experiment_name = "4_test/0_phenotype"
+    if len(sys.argv) == 2:
+        experiment_name = sys.argv[1]
+
     ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3)
-    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name="4_test/0_phenotype", evaluate_best=False)
+    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name=experiment_name, evaluate_best=False)
     print("best_fitness: {}".format(best_fitness))
+
+    sys.exit(0)
     
