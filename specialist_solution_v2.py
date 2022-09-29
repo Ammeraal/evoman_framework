@@ -481,7 +481,7 @@ class SpecialistSolutionV2():
         offspring = []
 
         # standard crossover
-        selected_parents = copy.deepcopy(self.selection_algorithm.select(self.pop))
+        selected_parents = self.selection_algorithm.select(self.pop)
         for i in range(pop_size - self.elitism):
             new_genome = self.cross_algorithm.cross(selected_parents, pop_size=pop_size)
             offspring.append(new_genome)
@@ -491,7 +491,8 @@ class SpecialistSolutionV2():
         offspring = self.mutation_algorithm.mutate(offspring)
 
         # elitism
-        elite_parents = sorted(self.pop, key=lambda x: x.fitness)[(self.elitism+1)*-1:-1]
+        elite_parents = copy.deepcopy(sorted(self.pop, key=lambda x: x.fitness)[-self.elitism:])
+
         self.pop = np.append(offspring, elite_parents)
 
         self.current_generation += 1
