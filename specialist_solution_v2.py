@@ -312,6 +312,9 @@ class SpecialistSolutionV2():
         self.n_hidden = n_hidden
         self.elitism = elitism
 
+        self.best_fitness = -10
+        self.best_individual = None
+
     def init_population(self, pop_size, _n_hidden):
         # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
         seed = 42
@@ -388,14 +391,21 @@ class SpecialistSolutionV2():
         # normalize by amount of individual sums
         return similar_sum / ((len(pop)**2 - len(pop)) / 2.)
 
-    def save_population(self, path, pop, generation):
+    def save_population(self, path, pop, generation, best_fitness, best_individual):
         print("saving population at {}".format(path))
         np.save(f"{path}.npy", pop)
-        np.savetxt(f"{path}_generation", np.array([generation]))
+        np.save(f"{path}_best_individual.npy", np.array([best_individual]))
+        np.savetxt(f"{path}_generation", np.array([generation, best_fitness]))
 
     def load_population(self, path):
         print("loading initial population for {}".format(path))
-        return np.load(f"{path}.npy", allow_pickle=True), int(np.loadtxt(f"{path}_generation"))
+        pop = np.load(f"{path}.npy", allow_pickle=True)
+        additional_data = np.loadtxt(f"{path}_generation")
+        best_individual = np.load(f"{path}_best_individual.npy", allow_pickle=True)[0]
+        last_gen = int(additional_data[0])
+        best_fitness = float(additional_data[1])
+
+        return pop, last_gen, best_fitness, best_individual
 
     def fitness_boxplot(self, file, generations):
         print(file)
@@ -447,13 +457,12 @@ class SpecialistSolutionV2():
 
         # initialization
         if not self.load_pop:
-            pop = self.init_population(
-                pop_size=pop_size, _n_hidden=self.n_hidden)
+            pop = self.init_population(pop_size=pop_size, _n_hidden=self.n_hidden)
             file_open_mode = "w"
             self.load_generation = -1
         else:
             #pop = self.load_population(f"{self.save_dir}pop_{self.load_generation}.npy")
-            pop, self.load_generation = self.load_population(f"{self.save_dir}autosave")
+            pop, self.load_generation, self.best_fitness, self.best_individual = self.load_population(f"{self.save_dir}autosave")
             file_open_mode = "a"
 
         save_txt_handle = open(f"{self.save_dir}fitness.csv", file_open_mode)
@@ -486,7 +495,6 @@ class SpecialistSolutionV2():
         self.update_algorithms()
 
     def run(self, generations, pop_size, save_txt_handle, div_file):
-        max_fitness = -10
         for i in range(self.load_generation + 1, generations):
             div = self.diversity(self.pop)
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i,
@@ -499,9 +507,11 @@ class SpecialistSolutionV2():
             self.pop = self.threaded_evaluation(self.pop, self.n_hidden)
 
             # save best fitness
-            local_max = np.max(np.array([g.fitness for g in self.pop]))
-            if local_max > max_fitness:
-                max_fitness = local_max
+            local_fitness = np.array([g.fitness for g in self.pop])
+            local_max = np.max(local_fitness)
+            if local_max > self.best_fitness:
+                self.best_fitness = local_max
+                self.best_individual = self.pop[np.argmax(local_fitness)]
 
             fitness_values = [p.fitness for p in self.pop]      # store them but save them right before the backup
             self.next_generation(pop_size)
@@ -510,14 +520,14 @@ class SpecialistSolutionV2():
             #if i % self.save_interval == 0:
             self.save_fitness(save_txt_handle, fitness_values)
             self.save_diversity(div_file, self.diversity(self.pop))
-            self.save_population(f"{self.save_dir}autosave", self.pop, i)
+            self.save_population(f"{self.save_dir}autosave", self.pop, i, self.best_fitness, self.best_individual)
 
             end = time.perf_counter()
             print("execution for one generation took: {} sec".format(end-start_t))
-        return max_fitness
+        return self.best_fitness
 
     def start(self, generations=30, pop_size=20,
-              experiment_name="test", generate_plots=True, auto_load=True):
+              experiment_name="test", generate_plots=True, auto_load=True, evaluate_best=False):
         # TODO set all hyper params
         # Hyper params
 
@@ -528,9 +538,12 @@ class SpecialistSolutionV2():
         save_txt_handle, div_file = self.initialize_run(pop_size, auto_load)
 
         # evaluation
-        # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
-        max_fitness = self.run(generations, pop_size,
-                               save_txt_handle, div_file)
+        if not evaluate_best:
+            # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
+            max_fitness = self.run(generations, pop_size,
+                                   save_txt_handle, div_file)
+        else:
+            self.threaded_evaluation(np.array([self.best_individual]), self.n_hidden)
 
         # TODO return best fitness
         # TODO implement early stopping
@@ -546,8 +559,9 @@ class SpecialistSolutionV2():
         return max_fitness
 
 
+
 if __name__ == "__main__":
-    ea_instance = SpecialistSolutionV2()
-    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name="5_matrix_gauss_pressure_more_mut")
+    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3)
+    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name="4_test/0_phenotype", evaluate_best=False)
     print("best_fitness: {}".format(best_fitness))
     
