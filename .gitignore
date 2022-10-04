@@ -171,3 +171,4 @@ evoAlgo/
 neat-checkpoint-*
 *_logs.txt
 specialist_solution_v2/*
+generalist_solution/*

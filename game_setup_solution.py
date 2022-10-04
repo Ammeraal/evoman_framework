@@ -17,26 +17,31 @@ from math import fabs,sqrt
 import glob, os
 
 class GameManager():
-    def __init__(self,controller = None, config = None, enemy_number=4):
+    def __init__(self,controller = None, config = None, enemy_numbers=[4]):
+        show_demo = False
+
         if config is not None:
             raise NotImplementedError("Custom config not implemented yet")
         if controller is None:
             raise NotImplementedError("Empty controller not implemented yet")
         # choose this for not using visuals and thus making experiments faster
-        headless = True
-        if headless:
+        if not show_demo:
             os.environ["SDL_VIDEODRIVER"] = "dummy"
+
         experiment_name = 'individual_specialist_solution'
         if not os.path.exists(experiment_name):
             os.makedirs(experiment_name)
         # initializes simulation in individual evolution mode, for single static enemy.
+        multiplemode = "yes" if len(enemy_numbers) > 1 else "no"
+        speed = "normal" if show_demo else "fastest"
         env = Environment(experiment_name=experiment_name,
-                          enemies=[enemy_number],
+                          enemies=enemy_numbers,
                           playermode="ai",
+                          multiplemode=multiplemode,
                           player_controller=controller,
                           enemymode="static",
                           level=2,
-                          speed="fastest")
+                          speed=speed)
         # default environment fitness is assumed for experiment
         #env.state_to_log() # checks environment state
         ####   Optimization for controller solution (best genotype-weights for phenotype-network): Ganetic Algorihm    ###
