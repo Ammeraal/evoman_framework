@@ -17,7 +17,7 @@ from math import fabs,sqrt
 import glob, os
 
 class GameManager():
-    def __init__(self,controller = None,config = None):
+    def __init__(self,controller = None, config = None, enemy_number=4):
         if config is not None:
             raise NotImplementedError("Custom config not implemented yet")
         if controller is None:
@@ -31,7 +31,7 @@ class GameManager():
             os.makedirs(experiment_name)
         # initializes simulation in individual evolution mode, for single static enemy.
         env = Environment(experiment_name=experiment_name,
-                          enemies=[1],
+                          enemies=[enemy_number],
                           playermode="ai",
                           player_controller=controller,
                           enemymode="static",
