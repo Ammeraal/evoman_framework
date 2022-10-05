@@ -1,6 +1,8 @@
 import random
 from Genome import Genome
 import numpy as np
+import copy
+
 
 class Crossover:
     members = []
@@ -19,6 +21,7 @@ class Crossover:
 
 class UniformCrossover(Crossover):
     members = []
+
     def cross(self, parents_list, pop_size):
         while True:
             parent1_idx = random.randint(0, len(parents_list) - 1)
@@ -40,6 +43,7 @@ class UniformCrossover(Crossover):
         new_genome = Genome(child)
         return new_genome
 
+
 class MatrixCrossover(Crossover):
     members = ["nr_parents"]
 
@@ -57,7 +61,6 @@ class MatrixCrossover(Crossover):
         value = np.concatenate((bias, weights.flatten()))
 
         return value
-
 
     def cross(self, parent_list, pop_size):
         group_input_weights = True
@@ -79,12 +82,14 @@ class MatrixCrossover(Crossover):
         if group_input_weights:
             for i in range(np.shape(offspring_weight)[0]):
                 parent_idx = np.random.randint(0, len(parents))
-                offspring_weight[i,:] = np.copy(weights[parent_idx][i,:])      # transfer the i'th column of the sampled parent
+                offspring_weight[i, :] = np.copy(
+                    weights[parent_idx][i, :])  # transfer the i'th column of the sampled parent
         else:
             # loop over cols
             for i in range(np.shape(offspring_weight)[1]):
                 parent_idx = np.random.randint(0, len(parents))
-                offspring_weight[:,i] = np.copy(weights[parent_idx][:,i])      # transfer the i'th row of the sampled parent
+                offspring_weight[:, i] = np.copy(
+                    weights[parent_idx][:, i])  # transfer the i'th row of the sampled parent
 
         # loop over colls for bias
         for i in range(len(offspring_bias)):
@@ -95,9 +100,11 @@ class MatrixCrossover(Crossover):
         vector = self._matrix_to_genome(offspring_weight, offspring_bias)
         return Genome(vector)
 
+
 class FractionalCrossover(Crossover):
-    member=[]
-    def cross(self,parents_list):
+    member = []
+
+    def cross(self, parents_list):
         while True:
             parent1_idx = random.randint(0, len(parents_list) - 1)
             parent2_idx = random.randint(0, len(parents_list) - 1)
@@ -107,15 +114,16 @@ class FractionalCrossover(Crossover):
         parent1 = parents_list[parent1_idx].value
         parent2 = parents_list[parent2_idx].value
 
-        fraction = random.uniform(0,1)
-        child = fraction * parent1 + (1-fraction) * parent2
+        fraction = random.uniform(0, 1)
+        child = fraction * parent1 + (1 - fraction) * parent2
 
         return Genome(child)
 
 
 class OnePointCrossover(Crossover):
-    #Member - elitism
+    # Member - elitism
     members = []
+
     def cross(self, parents_list, pop_size):
         while True:
             parent1_idx = random.randint(0, len(parents_list) - 1)
@@ -126,16 +134,15 @@ class OnePointCrossover(Crossover):
         parent1 = parents_list[parent1_idx].value
         parent2 = parents_list[parent2_idx].value
 
-        point = random.randrange(1, len(parents_list[0].value)-1)
+        point = random.randrange(1, len(parents_list[0].value) - 1)
 
         child = np.concatenate((parent1[:point], parent2[point:]))
         new_genome = Genome(child)
         return new_genome
 
 
-
 class MultiParentCrossover(Crossover):
-    #Member - nr_parents
+    # Member - nr_parents
     members = ["nr_parents"]
 
     def cross(self, parents_list, pop_size):
@@ -147,12 +154,12 @@ class MultiParentCrossover(Crossover):
         # select list of crossing parents
         crossing_pool = np.random.choice(parents_list, nr_parents, replace=False)
 
-        #while True:
+        # while True:
         #    parents_idx.add(random.randint(0, len(parents_list) - 1))
         #    if len(parents_idx) == nr_parents:
         #        break
         # print(parents_idx)
-        #for idx in parents_idx:
+        # for idx in parents_idx:
         #    parents.append(parents_list[idx].value)
 
         parents = [p.value for p in crossing_pool]
@@ -164,26 +171,34 @@ class MultiParentCrossover(Crossover):
             if len(points) == (nr_parents - 1):
                 break
         points.sort()
-        for k in range(nr_parents-1):
+        for k in range(nr_parents - 1):
             if k == 0:
                 child = np.concatenate(
-                    (np.copy(parents[k][:points[k]]), np.copy(parents[k+1][points[k]:points[k+1]])))
+                    (np.copy(parents[k][:points[k]]), np.copy(parents[k + 1][points[k]:points[k + 1]])))
             elif k == (nr_parents - 2):
-                child = np.concatenate((child, np.copy(parents[k+1][points[k]:])))
+                child = np.concatenate((child, np.copy(parents[k + 1][points[k]:])))
             else:
                 child = np.concatenate(
-                    (child, np.copy(parents[k+1][points[k]:points[k+1]])))
+                    (child, np.copy(parents[k + 1][points[k]:points[k + 1]])))
+
         new_genome = Genome(child)
+
+        # crossover sigma (chose sigma of one parent)
+        new_genome.sigma = copy.copy(np.random.choice(crossing_pool).sigma)
+
         return new_genome
 
 
-class Mutation():
+class Mutation:
     def __init__(self, mutation_rate):
         self.mutation_rate = mutation_rate
 
     def mutate(self, population):
         pop_offspring = []
         for individual in population:
+            # modify sigma first and then mutate the offspring
+            self.mutate_sigma(individual)
+
             genome = individual.value
             offspring = []
             for gene in genome:
@@ -195,14 +210,54 @@ class Mutation():
                     offspring.append(w)
                 else:
                     offspring.append(gene)
-            pop_offspring.append(Genome(np.array(offspring)))
-        return np.array(pop_offspring)
+
+            individual.value = np.array(offspring)
 
     def mutate_gene(self, gene):
         return gene
 
+    def mutate_sigma(self, individual):
+        pass
+
     def set_mutation(self, rate):
         self.mutation_rate = rate
+
+
+class SelfAdaptiveMutation(Mutation):
+    def __init__(self, tau, eps, mutation_rate=0.2, mean=0):
+        super(SelfAdaptiveMutation, self).__init__(mutation_rate=mutation_rate)
+        # tau := step size (hyperparam) (eg. 1 / log(pop_size))
+        self.tau = tau
+        self.mean = mean
+        self.eps = eps
+
+    def mutate_sigma(self, individual: Genome):
+        # self adaption
+        # update: sigma * exp(tau * norm(0, 1))
+        new_sigma = individual.sigma * np.exp(self.tau * np.random.normal(0, 1))
+        # build a boundary (sigma < eps) to overcome vanishing
+        if new_sigma < self.eps:
+            new_sigma = self.eps
+
+        individual.sigma = new_sigma
+        self.sigma = individual.sigma  # this is temporarily overridden for each individual
+
+    def mutate_gene(self, gene):
+        w = gene + np.random.normal(self.mean, self.sigma)
+
+        # crop weight to [0, 1]
+        # overcome the problem of a higher probability for weights at the boundary
+        if w > 1:
+            w += 1 - w
+        elif w < -1:
+            w += -1 - w
+
+        return w
+
+    @staticmethod
+    def init_sigma(pop, mean=0.25):
+        for p in pop:
+            p.sigma = np.clip(np.random.normal(mean, 0.05), a_min=0.01, a_max=None)
 
 
 class GaussianMutation(Mutation):
@@ -219,12 +274,14 @@ class GaussianMutation(Mutation):
             w = -1
         return w
 
+
 class UniformMutation(Mutation):
     def __init__(self, mutation_rate=0.2):
         super().__init__(mutation_rate=mutation_rate)
 
     def mutate_gene(self, gene):
         return np.random.uniform(-1, 1)
+
 
 class Selection():
     pass
@@ -235,13 +292,12 @@ class RankingSelection(Selection):
         self.s = s
 
     def select(self, pop):
-
         # sort population by their fitness
         sorted_pop = np.array(sorted(pop, key=lambda p: p.fitness))
-        mu = len(sorted_pop)        #round(len(sorted_pop) / 4)     # number of parents (as fraction of the population)
+        mu = len(sorted_pop)  # round(len(sorted_pop) / 4)     # number of parents (as fraction of the population)
 
         # generate p_s
-        p = []              # each element of the list is the probability for an element in sorted_pop to be selected
+        p = []  # each element of the list is the probability for an element in sorted_pop to be selected
         for i in range(len(sorted_pop)):
             p.append((2 - self.s) / mu + (2 * i * (self.s - 1)) / (mu * (mu - 1)))
 
@@ -249,6 +305,7 @@ class RankingSelection(Selection):
         mating_pool = np.random.choice(sorted_pop, mu, replace=True, p=np.array(p))
 
         return mating_pool
+
 
 class NaiveSelection(Selection):
     def __init__(self, s=2.0):
@@ -265,23 +322,21 @@ class NaiveSelection(Selection):
         order = np.argsort(fitness)
         ranks = np.argsort(order)
         for i in ranks:
-            p.append((2-self.s)/z + (2*i*(self.s-1))/(z*(z-1)))
+            p.append((2 - self.s) / z + (2 * i * (self.s - 1)) / (z * (z - 1)))
         order = np.argsort(p)
-        p = sorted(p/max(p))
+        p = sorted(p / max(p))
         # select parents according to offspring probability (5.2.3 Implementing selection probabilities)
         current_member = 1
         i = 0
-        r = np.random.uniform(0, 1/z)
+        r = np.random.uniform(0, 1 / z)
         while current_member <= z:
             if i > len(p):
                 mating_pool.append(pop[order[i]])
             else:
                 while r <= p[i]:
                     mating_pool.append(pop[order[i]])
-                    r = r+1/z
+                    r = r + 1 / z
                     current_member += 1
             i += 1
 
         return np.array(mating_pool)
-
-

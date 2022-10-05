@@ -45,6 +45,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/generalist_solution/test0/sigma.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/specialist_solution_v2/4_final/0_genotype/diversity.csv">
           <value>
             <Attribute>

@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5906253b-b16a-48f4-888e-4b5dfc812e51" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/game_setup_solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/game_setup_solution.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Genome.py" beforeDir="false" afterPath="$PROJECT_DIR$/Genome.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ea_lib.py" beforeDir="false" afterPath="$PROJECT_DIR$/ea_lib.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/generalist_solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/generalist_solution.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualize.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualize.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualize_test.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,16 +53,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Project.color": "030917",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/home/paddy/Documents/Repositories/evoman_framework",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Project.color&quot;: &quot;030917&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/paddy/Documents/Repositories/evoman_framework&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -221,6 +219,7 @@
       <workItem from="1664477292187" duration="164000" />
       <workItem from="1664555153016" duration="6607000" />
       <workItem from="1664624631283" duration="5561000" />
+      <workItem from="1664955157040" duration="6519000" />
     </task>
     <servers />
   </component>
@@ -275,7 +274,7 @@
     <SUITE FILE_PATH="coverage/evoman_framework$specialist_solution.coverage" NAME="specialist_solution Coverage Results" MODIFIED="1663182317513" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/specialist_solution" />
     <SUITE FILE_PATH="coverage/evoman_framework$specialist.coverage" NAME="specialist Coverage Results" MODIFIED="1663151300491" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/evoman_framework$dummy_demo.coverage" NAME="dummy_demo Coverage Results" MODIFIED="1663078084676" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/evoman_framework$generalist_solution.coverage" NAME="generalist_solution Coverage Results" MODIFIED="1664900394037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/evoman_framework$generalist_solution.coverage" NAME="generalist_solution Coverage Results" MODIFIED="1664961664127" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/evoman_framework$game_setup_solution.coverage" NAME="game_setup_solution Coverage Results" MODIFIED="1664304313122" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/evoman_framework$best_solutions.coverage" NAME="best_solutions Coverage Results" MODIFIED="1664624689597" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/evoman_framework$optimization_specialist_demo.coverage" NAME="optimization_specialist_demo Coverage Results" MODIFIED="1663079116638" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

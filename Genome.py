@@ -6,3 +6,5 @@ class Genome:
         self.value = _value
         self.fitness = 0.0
         self.gain = None
+
+        self.sigma = None
