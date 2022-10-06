@@ -16,8 +16,12 @@ import numpy as np
 from math import fabs,sqrt
 import glob, os
 
+class MultiGame(Environment):
+    def cons_multi(self, values):
+        return values
+
 class GameManager():
-    def __init__(self,controller = None, config = None, enemy_numbers=[4]):
+    def __init__(self,controller = None, config = None, enemy_numbers=[4], multi_fitness=False):
         show_demo = False
 
         if config is not None:
@@ -34,14 +38,27 @@ class GameManager():
         # initializes simulation in individual evolution mode, for single static enemy.
         multiplemode = "yes" if len(enemy_numbers) > 1 else "no"
         speed = "normal" if show_demo else "fastest"
-        env = Environment(experiment_name=experiment_name,
-                          enemies=enemy_numbers,
-                          playermode="ai",
-                          multiplemode=multiplemode,
-                          player_controller=controller,
-                          enemymode="static",
-                          level=2,
-                          speed=speed)
+        if multi_fitness:
+            env = MultiGame(experiment_name=experiment_name,
+                              enemies=enemy_numbers,
+                              playermode="ai",
+                              multiplemode=multiplemode,
+                              player_controller=controller,
+                              enemymode="static",
+                              level=2,
+                              speed=speed,
+                              )
+        else:
+            env = Environment(experiment_name=experiment_name,
+                            enemies=enemy_numbers,
+                            playermode="ai",
+                            multiplemode=multiplemode,
+                            player_controller=controller,
+                            enemymode="static",
+                            level=2,
+                            speed=speed,
+                            )
+
         # default environment fitness is assumed for experiment
         #env.state_to_log() # checks environment state
         ####   Optimization for controller solution (best genotype-weights for phenotype-network): Ganetic Algorihm    ###
@@ -52,3 +69,4 @@ class GameManager():
     #def export_config(self):
     def play(self,*args,**kwargs):
         return self.environment.play(*args,**kwargs)
+
