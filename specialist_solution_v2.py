@@ -237,6 +237,15 @@ class GaussianMutation(Mutation):
             w = -1
         return w
 
+class AdaptiveMutation(Mutation):
+    def __init__(self):
+        super().__init__()
+    
+    def mutate_gene(self, gene, current_generation_number, total_generations):
+        sigma = 1 - 0.9 * (current_generation_number/total_generations) # Implementation of restricting the maximum size of the mutation, based on the generation number
+        w = gene + np.random.normal(-sigma, sigma)
+        return w
+
 class UniformMutation(Mutation):
     def __init__(self, mutation_rate=0.2):
         super().__init__(mutation_rate=mutation_rate)
