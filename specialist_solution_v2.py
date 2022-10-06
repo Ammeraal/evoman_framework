@@ -313,9 +313,16 @@ class NaiveSelection(Selection):
 
 
 class SpecialistSolutionV2():
-    def __init__(self, nr_parents=3, mutation_rate=0.2, s=2.0, n_hidden=0, elitism=4):
+    def __init__(self, nr_parents=3, mutation_rate=0.2, s=2.0, n_hidden=0, elitism=4, cross_strategy="phenotype"):
         self.current_generation = 0
-        self.cross_algorithm = MultiParentCrossover(nr_parents=nr_parents)  #MatrixCrossover(nr_parents=nr_parents)      #MultiParentCrossover(nr_parents=3)
+
+        if cross_strategy == "phenotype":
+            self.cross_algorithm = MatrixCrossover(nr_parents=nr_parents)  #MatrixCrossover(nr_parents=nr_parents)      #MultiParentCrossover(nr_parents=3)
+        elif cross_strategy == "genotype":
+            self.cross_algorithm = MultiParentCrossover(nr_parents=nr_parents)  #MatrixCrossover(nr_parents=nr_parents)      #MultiParentCrossover(nr_parents=3)
+        else:
+            raise NotImplementedError("cross strategy not available")
+
         self.mutation_algorithm = GaussianMutation(mutation_rate=mutation_rate)# UniformMutation(mutation_rate=0.03) #
         self.selection_algorithm = RankingSelection(s=s)
         self.save_interval = 10
@@ -326,10 +333,10 @@ class SpecialistSolutionV2():
 
         self.best_fitness = -10
         self.best_individual = None
+        self.best_gain = None
 
     def init_population(self, pop_size, _n_hidden):
         # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
-        seed = 42
         num_inputs = 20
         num_output = 5
         init_bias = -1.0
@@ -346,9 +353,8 @@ class SpecialistSolutionV2():
         # TODO do this more efficient!
         pop = []
         for i in range(pop_size):
-            g = Genome(default_rng(seed).random(sum) * 2 + init_bias)
+            g = Genome(default_rng().random(sum) * 2 + init_bias)
             pop.append(g)
-            seed += 1
 
         return np.array(pop)
 
@@ -363,9 +369,10 @@ class SpecialistSolutionV2():
 
     # TODO pass n_hidden to this function in threated_evaluation
     def threaded_evaluation_fittness(self, g, n_hidden=0):
-        game = GameManager(controller=player_controller(n_hidden))
+        game = GameManager(controller=player_controller(n_hidden), enemy_number=self.enemy_number)
         g.fitness = 0.0
         g.fitness, p, e, t = game.play(pcont=g.value)
+        g.gain = p - e
         return g
 
     def evaluate_fitness_factory(self, game):
@@ -403,11 +410,11 @@ class SpecialistSolutionV2():
         # normalize by amount of individual sums
         return similar_sum / ((len(pop)**2 - len(pop)) / 2.)
 
-    def save_population(self, path, pop, generation, best_fitness, best_individual):
+    def save_population(self, path, pop, generation, best_fitness, best_individual, best_gain):
         print("saving population at {}".format(path))
         np.save(f"{path}.npy", pop)
         np.save(f"{path}_best_individual.npy", np.array([best_individual]))
-        np.savetxt(f"{path}_generation", np.array([generation, best_fitness]))
+        np.savetxt(f"{path}_generation", np.array([generation, best_fitness, best_gain]))
 
     def load_population(self, path):
         print("loading initial population for {}".format(path))
@@ -416,8 +423,9 @@ class SpecialistSolutionV2():
         best_individual = np.load(f"{path}_best_individual.npy", allow_pickle=True)[0]
         last_gen = int(additional_data[0])
         best_fitness = float(additional_data[1])
+        best_gain = float(additional_data[2])
 
-        return pop, last_gen, best_fitness, best_individual
+        return pop, last_gen, best_fitness, best_individual, best_gain
 
     def fitness_boxplot(self, file, generations):
         print(file)
@@ -474,7 +482,7 @@ class SpecialistSolutionV2():
             self.load_generation = -1
         else:
             #pop = self.load_population(f"{self.save_dir}pop_{self.load_generation}.npy")
-            pop, self.load_generation, self.best_fitness, self.best_individual = self.load_population(f"{self.save_dir}autosave")
+            pop, self.load_generation, self.best_fitness, self.best_individual, self.best_gain = self.load_population(f"{self.save_dir}autosave")
             file_open_mode = "a"
 
         save_txt_handle = open(f"{self.save_dir}fitness.csv", file_open_mode)
@@ -523,8 +531,10 @@ class SpecialistSolutionV2():
             local_fitness = np.array([g.fitness for g in self.pop])
             local_max = np.max(local_fitness)
             if local_max > self.best_fitness:
-                self.best_fitness = local_max
-                self.best_individual = self.pop[np.argmax(local_fitness)]
+                self.best_fitness = copy.copy(local_max)
+                self.best_individual = copy.deepcopy(self.pop[np.argmax(local_fitness)])
+                self.best_gain = copy.copy(self.pop[np.argmax(local_fitness)].gain)
+                print("new best individual with fitness: {} and gain: {}".format(self.best_fitness, self.best_gain))
 
             fitness_values = [p.fitness for p in self.pop]      # store them but save them right before the backup
             self.next_generation(pop_size)
@@ -533,16 +543,17 @@ class SpecialistSolutionV2():
             #if i % self.save_interval == 0:
             self.save_fitness(save_txt_handle, fitness_values)
             self.save_diversity(div_file, self.diversity(self.pop))
-            self.save_population(f"{self.save_dir}autosave", self.pop, i, self.best_fitness, self.best_individual)
+            self.save_population(f"{self.save_dir}autosave", self.pop, i, self.best_fitness, self.best_individual, self.best_gain)
 
             end = time.perf_counter()
             print("execution for one generation took: {} sec".format(end-start_t))
         return self.best_fitness
 
     def start(self, generations=30, pop_size=20,
-              experiment_name="test", generate_plots=True, auto_load=True, evaluate_best=False):
+              experiment_name="test", generate_plots=True, auto_load=True, evaluate_best=False, enemy_number=4):
         # TODO set all hyper params
         # Hyper params
+        self.enemy_number = enemy_number
 
         self.save_dir = f"specialist_solution_v2/{experiment_name}/"
         if not os.path.exists(self.save_dir):
@@ -574,12 +585,20 @@ class SpecialistSolutionV2():
 
 
 if __name__ == "__main__":
-    experiment_name = "4_test/0_phenotype"
-    if len(sys.argv) == 2:
+    cross_strategy = "genotype"
+    experiment_name = f"4_final_v2/0_{cross_strategy}"
+    enemy_number = 4
+    if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
+        if len(sys.argv) > 2:
+            cross_strategy = sys.argv[2]
+            if len(sys.argv) > 3:
+                enemy_number = sys.argv[3]
 
-    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3)
-    best_fitness = ea_instance.start(generations=80, pop_size=40, experiment_name=experiment_name, evaluate_best=False)
+    print("enemy_number: {} ********************".format(enemy_number))
+
+    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3, cross_strategy=cross_strategy)
+    best_fitness = ea_instance.start(generations=42, pop_size=40, experiment_name=experiment_name, evaluate_best=False, enemy_number=enemy_number, generate_plots=True)
     print("best_fitness: {}".format(best_fitness))
 
     sys.exit(0)
