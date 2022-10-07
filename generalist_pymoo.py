@@ -66,7 +66,8 @@ class EvoProblem(Problem):
 
     def threaded_evaluation_fittness(self, value, n_hidden=0):
         game = GameManager(controller=player_controller(n_hidden), enemy_numbers=self.enemy_numbers, multi_fitness=True)
-        fitness, p, e, t = game.play(pcont=value)
+        f, p, e, t = game.play(pcont=value)
+        fitness = copy.copy(f)
         for i in range(len(fitness)):
             fitness[i] *= -1
 
@@ -74,7 +75,8 @@ class EvoProblem(Problem):
 
     def _evaluate(self, designs, out, *args, **kwargs):
         # evaluate designs
-        out['F'] = self.threaded_evaluation(designs, self.n_hidden)
+        res = self.threaded_evaluation(designs, self.n_hidden)
+        out['F'] = np.hstack(res)           # pymoo seams to want only a vector with corresponding elements as neighbours
 
 
 class SpecialistSolutionV2:
@@ -136,6 +138,7 @@ class SpecialistSolutionV2:
 
         algorithm = NSGA2(pop_size=self.pop_size,
                           sampling=pop,
+
                           )
         # load custom metadata dict
         data["just_loaded"] = True
@@ -170,7 +173,7 @@ class SpecialistSolutionV2:
                        callback=SaveCallback(save_dir=self.save_dir),
                        termination=('n_gen', self.generations - algorithm.data["n_gen"] + gen_offset),
                        seed=1,
-                       copy_algorithm=False,
+                       copy_algorithm=True,
                        verbose=True
                        )
 
@@ -191,15 +194,10 @@ class SpecialistSolutionV2:
         # TODO implement early stopping
         print("all done!")
 
-        #if generate_plots:
-        #    print("visualizing and saving results...")
-        #    visualize_fitness(f"{self.save_dir}fitness.csv", generations, save_dir=self.save_dir)
-        #    diversity_plot(f"{self.save_dir}diversity.csv", save_dir=self.save_dir)
-
 
 
 if __name__ == "__main__":
-    experiment_name = f"pymoo"
+    experiment_name = f"pymoo_test0"
     enemy_numbers = [1, 8]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
@@ -208,7 +206,7 @@ if __name__ == "__main__":
 
     print("enemy_numbers: {} ********************".format(enemy_numbers))
 
-    ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=40, generations=50,
+    ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=10, generations=10,
                                        experiment_name=experiment_name, enemy_numbers=enemy_numbers)
     ea_instance.start(auto_load=True, evaluate_best=False, generate_plots=True)
 
