@@ -12,7 +12,7 @@ from ea_lib import *
 from visualize import visualize_fitness, diversity_plot
 
 class SpecialistSolutionV2:
-    def __init__(self, nr_parents=3, mutation_rate=0.2, s=2.0, n_hidden=0, elitism=4, pop_size=40):
+    def __init__(self, nr_parents=3, mutation_rate=0.2, s=2.0, n_hidden=0, elitism=4, pop_size=40, incest_thresh=100):
         self.current_generation = 0
 
         self.cross_algorithm = MultiParentCrossover(nr_parents=nr_parents)
@@ -25,7 +25,7 @@ class SpecialistSolutionV2:
         self.n_hidden = n_hidden
         self.elitism = elitism
         self.pop_size = pop_size
-
+        self.incest_thresh= incest_thresh
         self.best_fitness = -100
         self.best_individual = None
         self.best_gain = None
@@ -137,13 +137,13 @@ class SpecialistSolutionV2:
     def update_algorithms(self):
         pass
 
-    def next_generation(self, pop_size):
+    def next_generation(self, pop_size, incest_thresh):
         offspring = []
 
         # standard crossover
         selected_parents = self.selection_algorithm.select(self.pop)
         for i in range(pop_size - self.elitism):
-            new_genome = self.cross_algorithm.cross(selected_parents, pop_size=pop_size)
+            new_genome = self.cross_algorithm.cross(selected_parents, pop_size=pop_size, incest_thresh=incest_thresh)
             offspring.append(new_genome)
         offspring = np.array(offspring)
 
@@ -157,7 +157,7 @@ class SpecialistSolutionV2:
         self.current_generation += 1
         self.update_algorithms()
 
-    def run(self, generations, pop_size, fitness_handle, div_file, sigma_handle):
+    def run(self, generations, pop_size, fitness_handle, div_file, sigma_handle, incest_thresh):
         for i in range(self.load_generation + 1, generations):
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, self.diversity(self.pop)))
             start_t = time.perf_counter()
@@ -173,11 +173,13 @@ class SpecialistSolutionV2:
                 self.best_individual = copy.deepcopy(self.pop[np.argmax(local_fitness)])
                 self.best_gain = copy.copy(self.pop[np.argmax(local_fitness)].gain)
                 print("new best individual with fitness: {} and gain: {}".format(self.best_fitness, self.best_gain))
-
+            else:
+                self.incest_thresh -= 5
+            print(f"prevention rate: {self.incest_thresh}")
             fitness_values = [p.fitness for p in self.pop]      # store them but save them right before the backup
 
             # *** update pop
-            self.next_generation(pop_size)
+            self.next_generation(pop_size, incest_thresh)
 
 
             # saving system
@@ -207,7 +209,7 @@ class SpecialistSolutionV2:
         # evaluation
         if not evaluate_best:
             # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
-            max_fitness = self.run(generations, self.pop_size, fitness_handle, div_file, sigma_handle)
+            max_fitness = self.run(generations, self.pop_size, fitness_handle, div_file, sigma_handle, self.incest_thresh)
         else:
             self.threaded_evaluation(np.array([self.best_individual]), self.n_hidden)
 
@@ -228,8 +230,8 @@ class SpecialistSolutionV2:
 
 
 if __name__ == "__main__":
-    experiment_name = f"test0"
-    enemy_numbers = [1, 8]
+    experiment_name = f"test3"
+    enemy_numbers = [1, 2, 3]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
         if len(sys.argv) > 2:
@@ -237,9 +239,8 @@ if __name__ == "__main__":
 
     print("enemy_numbers: {} ********************".format(enemy_numbers))
 
-    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3, n_hidden=10, pop_size=40)
-    best_fitness = ea_instance.start(generations=80, experiment_name=experiment_name, evaluate_best=False, enemy_numbers=enemy_numbers, generate_plots=True)
+    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3, n_hidden=10, pop_size=40, incest_thresh=140)
+    best_fitness = ea_instance.start(generations=100, experiment_name=experiment_name, evaluate_best=True, enemy_numbers=enemy_numbers, generate_plots=True)
     print("best_fitness: {}".format(best_fitness))
-
     sys.exit(0)
     

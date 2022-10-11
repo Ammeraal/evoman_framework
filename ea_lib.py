@@ -15,7 +15,7 @@ class Crossover:
         for key, val in kwargs.items():
             setattr(self, key, val)
 
-    def cross(self, parent_list, pop_size):
+    def cross(self, parent_list, pop_size, incest_thresh):
         raise NotImplementedError("Base Crossover is a Pure Virtual Class")
 
 
@@ -145,7 +145,22 @@ class MultiParentCrossover(Crossover):
     # Member - nr_parents
     members = ["nr_parents"]
 
-    def cross(self, parents_list, pop_size):
+    def diversity(self, pop):
+        """
+        Returns a scalar that indicates the diversity of a population.
+        The higher this value the higher the diversity.
+        This heuristic is normalized among the pop size but not the genome length.
+        """
+
+        similar_sum = 0
+        for i in range(len(pop)):
+            for k in range(i+1, len(pop)):
+                similar_sum += sum((pop[i].value - pop[k].value) ** 2)
+
+        # normalize by amount of individual sums
+        return similar_sum / ((len(pop)**2 - len(pop)) / 2.)
+
+    def cross(self, parents_list, pop_size, incest_thresh):
         nr_parents = self.nr_parents
         parents_idx = set()
         parents = []
@@ -153,7 +168,15 @@ class MultiParentCrossover(Crossover):
         # print('parents_list is long: ',len(parents_list))
         # select list of crossing parents
         crossing_pool = np.random.choice(parents_list, nr_parents, replace=False)
-
+        distance = self.diversity(crossing_pool)
+        running = True
+        run = 1
+        while running and run < 4:
+            if distance <= incest_thresh:
+                crossing_pool = np.random.choice(parents_list, nr_parents, replace=False)
+            else:
+                running = False
+            run += 1
         # while True:
         #    parents_idx.add(random.randint(0, len(parents_list) - 1))
         #    if len(parents_idx) == nr_parents:
