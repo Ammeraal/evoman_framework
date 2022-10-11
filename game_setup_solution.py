@@ -70,3 +70,6 @@ class GameManager():
     def play(self,*args,**kwargs):
         return self.environment.play(*args,**kwargs)
 
+    def cons_multi_old(self,values):
+        return values.mean() - values.std()
+
