@@ -207,7 +207,8 @@ class MultiParentCrossover(Crossover):
         new_genome = Genome(child)
 
         # crossover sigma (chose sigma of one parent)
-        new_genome.sigma = copy.copy(np.random.choice(crossing_pool).sigma)
+        if parents_list[0].sigma:
+            new_genome.sigma = copy.copy(np.random.choice(crossing_pool).sigma)
 
         return new_genome
 

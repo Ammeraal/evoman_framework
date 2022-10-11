@@ -13,11 +13,17 @@ from pymoo.core.problem import Problem
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.core.callback import Callback
 import json
+import math
+
 
 sys.path.insert(0, 'evoman')
 from demo_controller import player_controller
 from game_setup_solution import GameManager
 from visualize import visualize_fitness, diversity_plot
+
+# get operators
+from pymoo_operators import NSGA2Crossover
+from pymoo_operators import NSGA2Mutation
 
 class SaveCallback(Callback):
     def __init__(self, save_dir):
@@ -75,7 +81,11 @@ class EvoProblem(Problem):
 
     def _evaluate(self, designs, out, *args, **kwargs):
         # evaluate designs
-        res = self.threaded_evaluation(designs, self.n_hidden)
+        # TODO implement selfadaptive mutation
+        # population=[]
+        # for individual in designs:
+        #     population.append(individual[:-2])
+        res = self.threaded_evaluation(designs, self.n_hidden) # change designs to population for selfadaptive mutation
         out['F'] = np.hstack(res)           # pymoo seams to want only a vector with corresponding elements as neighbours
 
 
@@ -117,7 +127,9 @@ class SpecialistSolutionV2:
             pop.append(list(g))
 
         algorithm = NSGA2(pop_size=pop_size,
-                          sampling=np.array(pop),
+                          sampling=np.array(pop)
+                          ,crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1)
+                          ,mutation=NSGA2Mutation(tau=1/math.log(pop_size,10),eps=0.5,mean=0)
         )
         # init custom metadata dict
         algorithm.data = {"n_gen": 0,
@@ -137,9 +149,10 @@ class SpecialistSolutionV2:
             pop = dill.load(f)
 
         algorithm = NSGA2(pop_size=self.pop_size,
-                          sampling=pop,
-
-                          )
+                          sampling=pop
+                          ,crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1)
+                          ,mutation=NSGA2Mutation(tau=1/math.log(self.pop_size,10),eps=0.5,mean=0)
+                            )
         # load custom metadata dict
         data["just_loaded"] = True
         algorithm.data = data
