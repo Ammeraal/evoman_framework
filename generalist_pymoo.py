@@ -147,7 +147,7 @@ class SpecialistSolutionV2:
     def create_algorithm(self, sampling):
         algorithm = NSGA2(pop_size=self.pop_size,
                           sampling=sampling,
-                          crossover=SinglePointCrossover(),#NSGA2Crossover(nr_parents=3, nr_offspring=1),
+                          crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1),
                           mutation=GaussianMutationPymoo(sigma=0.25, prob_var=0.16)#NSGA2Mutation(tau=1/math.log(pop_size,10),eps=0.5,mean=0)
                           )
         return algorithm
@@ -254,7 +254,7 @@ class SpecialistSolutionV2:
 
 
 if __name__ == "__main__":
-    experiment_name = f"pymoo_test"
+    experiment_name = f"pymoo_test1"
     enemy_numbers = [3, 4]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
@@ -265,7 +265,7 @@ if __name__ == "__main__":
 
     ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=40, generations=50,
                                        experiment_name=experiment_name, enemy_numbers=enemy_numbers)
-    ea_instance.start(auto_load=True, evaluate_best=False, generate_plots=True)
+    ea_instance.start(auto_load=False, evaluate_best=False, generate_plots=True)
 
     sys.exit(0)
 

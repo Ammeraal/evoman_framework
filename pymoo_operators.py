@@ -79,14 +79,14 @@ class NSGA2Mutation(Mutation):
         #mutation = SelfAdaptiveMutation(self.tau, self.eps, prob_var, self.mean)
         mutation = GaussianMutation(stdv=0.25, mutation_rate=prob_var)
         # convert X to Genome style object
-        genome = Genome(X) #Genome(X[:-2],X[-1])
+        genome = Genome(X) 
 
         for idx, g in genome.value:
             genome.value[idx] = mutation.mutate_gene(g)
 
-        # mutation.mutate_sigma(genome)
+       
 
-        return [genome.value] # , genome.sigma]
+        return [genome.value] 
 
 class NSGA2Crossover(Crossover):
 
@@ -95,12 +95,20 @@ class NSGA2Crossover(Crossover):
         self.nr_parents = nr_parents
 
     def _do(self, _, X, **kwargs):
-        # TODO implement selfadaptive mutation: uncomment
-        parents=[]  
-        for parent in X:
-            parents.append(Genome(parent))
+        # TODO implement selfadaptive mutation
+        _, n_matings, _ = X.shape
+        parents = []
+        children = []
+        crossover = MultiParentCrossover(nr_parents=self.nr_parents)
+        
+        for i in range(n_matings):
+            [parents.append(Genome(X[j][i])) for j in range(self.n_parents)]
+            children.append(crossover.cross(parents, pop_size=n_matings))
+            parents = []
+        Xp = []
+        for child in children:
+            Xp.append(child.value)
+        Xp = np.array(Xp)
 
-        crossover = MultiParentCrossover()
-        genome = crossover.cross(parents)
-
-        return [genome.value] # , genome.sigma]
+        Xp = np.expand_dims(Xp, axis=0)  # extra dimension to fool the NSGA2 algorithm
+        return Xp

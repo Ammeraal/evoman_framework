@@ -160,7 +160,7 @@ class MultiParentCrossover(Crossover):
         # normalize by amount of individual sums
         return similar_sum / ((len(pop)**2 - len(pop)) / 2.)
 
-    def cross(self, parents_list, pop_size, incest_thresh):
+    def cross(self, parents_list, pop_size, incest_thresh=0):
         nr_parents = self.nr_parents
         parents_idx = set()
         parents = []
