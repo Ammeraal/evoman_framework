@@ -130,7 +130,7 @@ class SpecialistSolutionV2:
     def load_population(self, path):
         print("loading initial population for {}".format(path))
         pop = np.load(f"{path}.npy", allow_pickle=True)
-        # TODO load json
+
         with open(f"{self.save_dir}meta_data.json", "r") as f:
             self.meta_data = json.load(f)
 
@@ -138,7 +138,6 @@ class SpecialistSolutionV2:
 
         return pop, best_individual
     def initialize_run(self, pop_size, auto_load=True):
-        # TODO load last executed state
         if os.path.exists(f"{self.save_dir}autosave.npy") and auto_load:
             self.load_pop = True
 
@@ -151,7 +150,7 @@ class SpecialistSolutionV2:
                 if os.path.exists(f"{self.save_dir}{name}"):
                     os.remove(f"{self.save_dir}{name}")
 
-            self.meta_data["n_gen"] = -1
+            self.meta_data["n_gen"] = 0
         else:
             self.pop, self.best_individual = self.load_population(f"{self.save_dir}autosave")
             file_open_mode = "a"
@@ -186,7 +185,7 @@ class SpecialistSolutionV2:
         self.update_algorithms()
 
     def run(self, generations, pop_size, fitness_handle, div_file, sigma_handle, incest_thresh):
-        for i in range(self.meta_data["n_gen"] + 1, generations):
+        for i in range(self.meta_data["n_gen"], generations):
             print("**** Starting with evaluation of generation {}. Diversity: {}".format(i, self.diversity(self.pop)))
             start_t = time.perf_counter()
 
@@ -210,7 +209,7 @@ class SpecialistSolutionV2:
 
             # *** update pop
             self.next_generation(pop_size, incest_thresh)
-            self.meta_data["n_gen"] = i
+            self.meta_data["n_gen"] = i + 1
 
             # saving system
             self.save_vector(fitness_handle, fitness_values)

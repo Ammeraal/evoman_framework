@@ -12,6 +12,8 @@ from pymoo.optimize import minimize
 from pymoo.core.problem import Problem
 from pymoo.operators.sampling.rnd import FloatRandomSampling
 from pymoo.core.callback import Callback
+from pymoo_operators import GaussianMutationPymoo
+from pymoo.operators.crossover.pntx import SinglePointCrossover
 import json
 import math
 
@@ -43,32 +45,62 @@ class SaveCallback(Callback):
         with open(f"{self.save_dir}checkpoint", "wb") as f:
             dill.dump(algorithm.pop, f)
 
+        # save best solutions
+        with open(f"{self.save_dir}checkpoint_opt", "wb") as f:
+            dill.dump(algorithm.opt, f)
+
+        # print best fitness values
+        optsF = [o.F for o in algorithm.opt]
+        print("opt fitness: {}".format(optsF))
+
+        # TODO this is a debug feature
+        optsF_distances = []
+        for i in range(len(optsF)):
+            for k in range(i+1, len(optsF)):
+                optsF_distances.append(optsF[i] - optsF[k])
+
+        if np.any(np.array(optsF_distances) == 0.0):
+            print("optsF distance:")
+            print(optsF_distances)
+            print("ERROR: two or more variables have the same fitness!")
+
         # save fitness
         fitness = []
         for p in algorithm.pop:
             fitness.append(p.F)
-        with open(f"{self.save_dir}fitness.txt", "a") as f:
+        with open(f"{self.save_dir}m_fitness.txt", "a") as f:
             np.savetxt(f, np.array(fitness))
             f.write("\n")
 
-        with open(f"{self.save_dir}data.json", "w") as f:
+        with open(f"{self.save_dir}meta_data.json", "w") as f:
             metadata = algorithm.data
             json.dump(metadata, f)
 
 
 class EvoProblem(Problem):
-    def __init__(self, n_hidden, enemy_numbers, **kwargs):
+    def __init__(self, n_hidden, enemy_numbers, save_dir, **kwargs):
         super().__init__(**kwargs)
 
         self.n_hidden = n_hidden
         self.enemy_numbers = enemy_numbers
+        self.save_dir = save_dir
 
     def threaded_evaluation(self, population, n_hidden):
         with concurrent.futures.ProcessPoolExecutor() as executor:
             # insert list of all genomes
             results = executor.map(self.threaded_evaluation_fittness, population,
                                    [n_hidden for _ in range(len(population))])
-            return list(results)
+            results = np.array(list(results))
+
+            # store p and e
+            with open(f"{self.save_dir}m_p.txt", "a") as f:
+                np.savetxt(f, np.array(results[:,1,:]))
+                f.write("\n")
+            with open(f"{self.save_dir}m_e.txt", "a") as f:
+                np.savetxt(f, np.array(results[:,2,:]))
+                f.write("\n")
+            # return fitness values
+            return results[:,0,:]
 
     def threaded_evaluation_fittness(self, value, n_hidden=0):
         game = GameManager(controller=player_controller(n_hidden), enemy_numbers=self.enemy_numbers, multi_fitness=True)
@@ -77,7 +109,7 @@ class EvoProblem(Problem):
         for i in range(len(fitness)):
             fitness[i] *= -1
 
-        return fitness
+        return fitness, p, e
 
     def _evaluate(self, designs, out, *args, **kwargs):
         # evaluate designs
@@ -112,25 +144,34 @@ class SpecialistSolutionV2:
             # no hidden layer
             self.n_var = num_inputs * num_output + num_output
 
-    def init_algorithm(self, pop_size, _n_hidden):
-        if os.path.exists(f"{self.save_dir}fitness.txt"):
-            os.remove(f"{self.save_dir}fitness.txt")
-        if os.path.exists(f"{self.save_dir}data.json"):
-            os.remove(f"{self.save_dir}data.json")
+    def create_algorithm(self, sampling):
+        algorithm = NSGA2(pop_size=self.pop_size,
+                          sampling=sampling,
+                          crossover=SinglePointCrossover(),#NSGA2Crossover(nr_parents=3, nr_offspring=1),
+                          mutation=GaussianMutationPymoo(sigma=0.25, prob_var=0.16)#NSGA2Mutation(tau=1/math.log(pop_size,10),eps=0.5,mean=0)
+                          )
+        return algorithm
 
+
+    def init_algorithm(self, _n_hidden):
+        if os.path.exists(f"{self.save_dir}m_fitness.txt"):
+            os.remove(f"{self.save_dir}m_fitness.txt")
+        if os.path.exists(f"{self.save_dir}meta_data.json"):
+            os.remove(f"{self.save_dir}meta_data.json")
+        if os.path.exists(f"{self.save_dir}m_p.txt"):
+            os.remove(f"{self.save_dir}m_p.txt")
+        if os.path.exists(f"{self.save_dir}m_e.txt"):
+            os.remove(f"{self.save_dir}m_e.txt")
 
         # each offspring has a list of weights with size sum_i(size(l_i-1) * size(l_i))
         init_bias = -1.0
         pop = []
-        for i in range(pop_size):
+        for i in range(self.pop_size):
             g = default_rng().random(self.n_var) * 2 + init_bias
             pop.append(list(g))
 
-        algorithm = NSGA2(pop_size=pop_size,
-                          sampling=np.array(pop)
-                          ,crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1)
-                          ,mutation=NSGA2Mutation(tau=1/math.log(pop_size,10),eps=0.5,mean=0)
-        )
+        algorithm = self.create_algorithm(np.array(pop))
+
         # init custom metadata dict
         algorithm.data = {"n_gen": 0,
                           "pop_size": self.pop_size,
@@ -142,31 +183,29 @@ class SpecialistSolutionV2:
     def load_algorithm(self, path):
         print("loading initial population for {}".format(path))
 
-        with open(f"{self.save_dir}data.json", "r") as f:
+        with open(f"{self.save_dir}meta_data.json", "r") as f:
             data = json.load(f)
 
         with open(f"{self.save_dir}checkpoint", "rb") as f:
             pop = dill.load(f)
 
-        algorithm = NSGA2(pop_size=self.pop_size,
-                          sampling=pop
-                          ,crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1)
-                          ,mutation=NSGA2Mutation(tau=1/math.log(self.pop_size,10),eps=0.5,mean=0)
-                            )
+        with open(f"{self.save_dir}checkpoint_opt", "rb") as f:
+            opt = dill.load(f)
+
+        algorithm = self.create_algorithm(pop)
         # load custom metadata dict
         data["just_loaded"] = True
         algorithm.data = data
+        algorithm.opt = opt
 
         return algorithm
 
-    def initialize_run(self, pop_size, auto_load=True):
+    def initialize_run(self, auto_load=True):
         # load last executed state
         if os.path.exists(f"{self.save_dir}checkpoint") and auto_load:
             algorithm = self.load_algorithm(self.save_dir)
-            # todo delete fitness
-            # todo save meta data
         else:
-            algorithm = self.init_algorithm(pop_size=pop_size, _n_hidden=self.n_hidden)
+            algorithm = self.init_algorithm(_n_hidden=self.n_hidden)
 
         return algorithm
 
@@ -176,7 +215,8 @@ class SpecialistSolutionV2:
                              n_var=self.n_var,
                              n_obj=len(enemy_numbers),
                              xl=[-1 for _ in range(self.n_var)],
-                             xu=[1 for _ in range(self.n_var)]
+                             xu=[1 for _ in range(self.n_var)],
+                             save_dir=self.save_dir
                              )
 
         # todo randomize seed
@@ -187,21 +227,25 @@ class SpecialistSolutionV2:
                        termination=('n_gen', self.generations - algorithm.data["n_gen"] + gen_offset),
                        seed=1,
                        copy_algorithm=True,
-                       verbose=True
+                       verbose=True,
                        )
 
         print(res.F)
         return
 
     def start(self, generate_plots=True, auto_load=True, evaluate_best=False):
-        algorithm = self.initialize_run(self.pop_size, auto_load)
+        algorithm = self.initialize_run(auto_load)
 
         # evaluation
         if not evaluate_best:
             # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
             self.run(algorithm)
         else:
-            self.threaded_evaluation(np.array([self.best_individual]), self.n_hidden)
+            game = GameManager(controller=player_controller(self.n_hidden), enemy_numbers=self.enemy_numbers,
+                               multi_fitness=True, show_demo=True)
+            for o in algorithm.opt:
+                f, p, e, t = game.play(pcont=o.X)
+                print("fitness: {}, gain: {}".format(f, p.sum() - e.sum()))
 
         # TODO return best fitness
         # TODO implement early stopping
@@ -210,8 +254,8 @@ class SpecialistSolutionV2:
 
 
 if __name__ == "__main__":
-    experiment_name = f"pymoo_test0"
-    enemy_numbers = [1, 8]
+    experiment_name = f"pymoo_test"
+    enemy_numbers = [3, 4]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
         if len(sys.argv) > 2:
@@ -219,7 +263,7 @@ if __name__ == "__main__":
 
     print("enemy_numbers: {} ********************".format(enemy_numbers))
 
-    ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=10, generations=10,
+    ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=40, generations=50,
                                        experiment_name=experiment_name, enemy_numbers=enemy_numbers)
     ea_instance.start(auto_load=True, evaluate_best=False, generate_plots=True)
 

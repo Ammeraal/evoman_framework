@@ -21,9 +21,7 @@ class MultiGame(Environment):
         return values
 
 class GameManager():
-    def __init__(self,controller = None, config = None, enemy_numbers=[4], multi_fitness=False):
-        show_demo = False
-
+    def __init__(self,controller = None, config = None, enemy_numbers=[4], multi_fitness=False, show_demo=False):
         if config is not None:
             raise NotImplementedError("Custom config not implemented yet")
         if controller is None:
