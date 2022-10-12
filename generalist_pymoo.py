@@ -39,6 +39,7 @@ class SaveCallback(Callback):
             return
 
         algorithm.data["n_gen"] += 1
+        algorithm.problem.data["n_gen"] = copy.copy(algorithm.data["n_gen"])
         print("Saving loop num {} to {} *******************************************".
               format(algorithm.data["n_gen"], self.save_dir))
 
@@ -147,8 +148,9 @@ class SpecialistSolutionV2:
     def create_algorithm(self, sampling):
         algorithm = NSGA2(pop_size=self.pop_size,
                           sampling=sampling,
-                          crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1),
-                          mutation=GaussianMutationPymoo(sigma=0.25, prob_var=0.16)#NSGA2Mutation(tau=1/math.log(pop_size,10),eps=0.5,mean=0)
+                          crossover=NSGA2Crossover(nr_parents=3, nr_offspring=1, prob=0.7),
+                          mutation=GaussianMutationPymoo(prob_var=0.25, sigma_max=0.25, adaptive=True,
+                                                         sigma_min=0.2, gen_max=self.generations - int(self.generations*0.1))#NSGA2Mutation(tau=1/math.log(pop_size,10),eps=0.5,mean=0)
                           )
         return algorithm
 
@@ -216,7 +218,8 @@ class SpecialistSolutionV2:
                              n_obj=len(enemy_numbers),
                              xl=[-1 for _ in range(self.n_var)],
                              xu=[1 for _ in range(self.n_var)],
-                             save_dir=self.save_dir
+                             save_dir=self.save_dir,
+                             data={"n_gen": copy.copy(algorithm.data["n_gen"])}
                              )
 
         # todo randomize seed
@@ -233,7 +236,7 @@ class SpecialistSolutionV2:
         print(res.F)
         return
 
-    def start(self, generate_plots=True, auto_load=True, evaluate_best=False):
+    def start(self, auto_load=True, evaluate_best=False):
         algorithm = self.initialize_run(auto_load)
 
         # evaluation
@@ -254,8 +257,8 @@ class SpecialistSolutionV2:
 
 
 if __name__ == "__main__":
-    experiment_name = f"pymoo_test1"
-    enemy_numbers = [3, 4]
+    experiment_name = f"pymoo_6_8_adaptive_more_mut"
+    enemy_numbers = [6, 8]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
         if len(sys.argv) > 2:
@@ -265,7 +268,7 @@ if __name__ == "__main__":
 
     ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=40, generations=50,
                                        experiment_name=experiment_name, enemy_numbers=enemy_numbers)
-    ea_instance.start(auto_load=False, evaluate_best=False, generate_plots=True)
+    ea_instance.start(auto_load=True, evaluate_best=False)
 
     sys.exit(0)
 

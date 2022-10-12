@@ -37,7 +37,7 @@ def mut_gauss(X, xl, xu, sigma, prob):
     _xu = np.repeat(xu[None, :], X.shape[0], axis=0)[mut]
     sigma = sigma[:, None].repeat(n_var, axis=1)[mut]
 
-    Xp[mut] = np.random.normal(X[mut], sigma)
+    Xp[mut] = X[mut] + np.random.normal(0, sigma, size=len(X[mut]))
 
     Xp = repair_random_init(Xp, X, xl, xu)
 
@@ -51,24 +51,42 @@ def mut_gauss(X, xl, xu, sigma, prob):
 
 class GaussianMutationPymoo(Mutation):
 
-    def __init__(self, sigma=0.1, **kwargs):
+    def __init__(self, sigma_max=0.25, sigma_min=0.1, gen_max=40, adaptive=True, **kwargs):
+        """
+        If adaptive is false, sigma_max will be used as sigma.
+        Otherwise, sigma will be decreased linearly until it reaches sigma_min at generation gen_max. After that it stays sigma_min
+        """
         super().__init__(**kwargs)
-        self.sigma = Real(sigma, bounds=(0.01, 0.25), strict=(0.0, 1.0))
+        self.sigma_max = sigma_max
+        self.sigma_min = sigma_min
+        self.gen_max = gen_max
+        self.adaptive = adaptive
+
+        self.sigma = self.get_sigma(0)
 
     def _do(self, problem, X, **kwargs):
         X = X.astype(float)
 
-        sigma = get(self.sigma, size=len(X))
+        sigma = np.array([self.get_sigma(problem.data["n_gen"] -1) for i in range(len(X))])
         prob_var = self.get_prob_var(problem, size=len(X))
 
         Xp = mut_gauss(X, problem.xl, problem.xu, sigma, prob_var)
 
         return Xp
+    
+    def get_sigma(self, n_gen):
+        if not self.adaptive:
+            return self.sigma_max
+
+        if n_gen > self.gen_max:
+            return self.sigma_min
+
+        return (-(self.sigma_max - self.sigma_min)/(self.gen_max-1)) * n_gen + self.sigma_max
 
 class NSGA2Mutation(Mutation):
     def __init__(self, tau, eps, mean=0):
         self.tau = tau
-        self. eps = eps
+        self.eps = eps
         self.mean = mean
 
     def _do(self, problem, X, **kwargs):

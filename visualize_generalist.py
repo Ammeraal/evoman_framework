@@ -24,7 +24,7 @@ def load_data(path, convert_to_max=False):
     return data, ret
 
 
-def plot_fitness(values, path, n_enemies):
+def plot_fitness(values, path, n_enemies, name=""):
     std = np.std(values, axis=1)
     avg = np.mean(values, axis=1)
     maxes = np.max(values, axis=1)
@@ -37,6 +37,7 @@ def plot_fitness(values, path, n_enemies):
     plt.plot(maxes, linestyle="dashed", label=labels)
 
     plt.legend()
+    plt.title("fitness on {}".format(name))
     plt.savefig(f"{path}/fitness.svg")
     plt.show()
 
@@ -47,19 +48,19 @@ def calc_gain_t(p, e):
     max_gain = np.max(gain, axis=1)
     return avg_gain, max_gain
 
-def plot_gain_t(avg_gain, max_gain):
+def plot_gain_t(avg_gain, max_gain, name=""):
     plt.plot(avg_gain, label="avg")
     plt.plot(max_gain, label="max", linestyle="dashed")
     plt.legend()
-    plt.title("Gain over time")
+    plt.title("Gain over time on {}".format(name))
     plt.xlabel("time")
     plt.ylabel("gain")
     plt.show()
 
-def plot_pareto_front(values):
+def plot_pareto_front(values, name=""):
     last_gen = values[-1, :, :]
     plt.scatter(x=last_gen[:, 0], y=last_gen[:, 1])
-    plt.title("Fittness of two Enemies in last gen")
+    plt.title("Fittness of two Enemies in last gen on {}".format(name))
     plt.xlabel("enemy A")
     plt.ylabel("enemy B")
     plt.show()
@@ -67,10 +68,11 @@ def plot_pareto_front(values):
 
 
 if __name__ == "__main__":
-    path = "generalist_solution/pymoo_3_4/"
+    experiment_name = "pymoo_1_2_adaptive_more_mut"
+    path = f"generalist_solution/{experiment_name}/"
     # always work with a fitness maximisation function. If the fitness is minimized in the algorithm use convert_to_max=True
     data, (fitness, p, e) = load_data(path, convert_to_max=True)
-    plot_fitness(fitness, path, data["n_enemies"])
-    plot_pareto_front(fitness)
+    plot_fitness(fitness, path, data["n_enemies"], name=experiment_name)
+    plot_pareto_front(fitness, name=experiment_name)
     avg_gain, max_gain = calc_gain_t(p, e)
-    plot_gain_t(avg_gain, max_gain)
+    plot_gain_t(avg_gain, max_gain, name=experiment_name)
