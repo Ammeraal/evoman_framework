@@ -200,6 +200,7 @@ class SpecialistSolutionV2:
             if local_max > self.meta_data["best_fitness"]:
                 self.meta_data["best_fitness"] = copy.copy(local_max)
                 self.best_individual = copy.deepcopy(self.pop[np.argmax(local_fitness)])
+                self.export_solution(self.best_individual.value)
                 self.meta_data["best_gain"] = copy.copy(self.pop[np.argmax(local_fitness)].gain)
                 print("new best individual with fitness: {} and gain: {}".format(self.meta_data["best_fitness"], self.meta_data["best_gain"]))
             else:
@@ -223,6 +224,9 @@ class SpecialistSolutionV2:
 
         return self.meta_data["best_fitness"]
 
+    def export_solution(self, values):
+        np.savetxt(f"{self.save_dir}solution.txt", values)
+
     def start(self, generations=30, experiment_name="test", generate_plots=True, auto_load=True, evaluate_best=False):
         # TODO set all hyper params
         # Hyper params
@@ -239,6 +243,7 @@ class SpecialistSolutionV2:
             # the loaded generation should be processed by the EA algorithm so we start directly with evaluation
             max_fitness = self.run(generations, self.pop_size, fitness_handle, div_file, sigma_handle, self.incest_thresh)
         else:
+            self.export_solution(self.best_individual.value)
             self.threaded_evaluation(np.array([self.best_individual]), self.n_hidden)
 
         # TODO return best fitness
@@ -258,7 +263,7 @@ class SpecialistSolutionV2:
 
 
 if __name__ == "__main__":
-    experiment_name = f"save_test"
+    experiment_name = f"final_6_8/1_incest"
     enemy_numbers = [1, 2]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
@@ -267,8 +272,8 @@ if __name__ == "__main__":
 
     print("enemy_numbers: {} ********************".format(enemy_numbers))
 
-    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3, n_hidden=10, pop_size=5, incest_thresh=140, enemy_numbers=enemy_numbers)
-    best_fitness = ea_instance.start(generations=10, experiment_name=experiment_name, evaluate_best=False, generate_plots=False)
+    ea_instance = SpecialistSolutionV2(mutation_rate=0.16, s=1.95, nr_parents=3, n_hidden=10, pop_size=40, incest_thresh=140, enemy_numbers=enemy_numbers)
+    best_fitness = ea_instance.start(generations=81, experiment_name=experiment_name, evaluate_best=False, generate_plots=False)
     print("best_fitness: {}".format(best_fitness))
     sys.exit(0)
     
