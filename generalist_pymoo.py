@@ -219,10 +219,9 @@ class SpecialistSolutionV2:
                              xl=[-1 for _ in range(self.n_var)],
                              xu=[1 for _ in range(self.n_var)],
                              save_dir=self.save_dir,
-                             data={"n_gen": copy.copy(algorithm.data["n_gen"])}
                              )
+        problem.data = {"n_gen": copy.copy(algorithm.data["n_gen"])}
 
-        # todo randomize seed
         gen_offset = 1 if algorithm.data["just_loaded"] else 0
         res = minimize(problem,
                        algorithm,
@@ -245,7 +244,7 @@ class SpecialistSolutionV2:
             self.run(algorithm)
         else:
             game = GameManager(controller=player_controller(self.n_hidden), enemy_numbers=self.enemy_numbers,
-                               multi_fitness=True, show_demo=True)
+                               multi_fitness=True, show_demo=False)
             for o in algorithm.opt:
                 f, p, e, t = game.play(pcont=o.X)
                 print("fitness: {}, gain: {}".format(f, p.sum() - e.sum()))
@@ -257,8 +256,10 @@ class SpecialistSolutionV2:
 
 
 if __name__ == "__main__":
-    experiment_name = f"pymoo_6_8_adaptive_more_mut"
-    enemy_numbers = [6, 8]
+    experiment_name = f"final_3_4/0_pymoo"
+    #experiment_name = "pymoo_6&8_0"
+    #enemy_numbers = [6, 8]
+    enemy_numbers = [1, 2, 3, 4, 5, 6, 7, 8]
     if len(sys.argv) > 1:
         experiment_name = sys.argv[1]
         if len(sys.argv) > 2:
@@ -266,9 +267,9 @@ if __name__ == "__main__":
 
     print("enemy_numbers: {} ********************".format(enemy_numbers))
 
-    ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=40, generations=50,
+    ea_instance = SpecialistSolutionV2(n_hidden=10, pop_size=40, generations=80,
                                        experiment_name=experiment_name, enemy_numbers=enemy_numbers)
-    ea_instance.start(auto_load=True, evaluate_best=False)
+    ea_instance.start(auto_load=True, evaluate_best=True)
 
     sys.exit(0)
 
