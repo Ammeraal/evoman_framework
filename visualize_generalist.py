@@ -24,6 +24,53 @@ def load_data(path, convert_to_max=False):
     return data, ret
 
 
+def plot_line(mean, std, linestyle, label):
+    plt.plot(mean, linestyle=linestyle, label=label)  # todo add label
+    plt.fill_between(np.arange(len(mean)), mean - std, mean + std, alpha=.3)
+
+
+def final_plot_fitness(prefix, experiments, enemies):
+    for en in enemies:
+        for ex in experiments:
+            if ex == "incest":
+                convert = False
+            else:
+                suffix = ""
+                convert = True
+
+            # get data of all 10 samples
+            f = []
+            for i in range(10):
+                data, (m_f, m_p, m_e) = load_data(f"{prefix}final_{en[0]}_{en[1]}v2/{i}_{ex}/", convert_to_max=convert)
+                m_f = m_f[:80,:]
+                # make multi_fitness
+                f.append(np.mean(m_f, axis=2) - np.std(m_f, axis=2))
+
+            f = np.array(f)
+            # get the mean fitness of the populations on each timestep for each training sample
+            f_max = np.max(f, axis=2)
+            f = np.mean(f, axis=2)
+            # plot mean and std over the training samples
+            f_mean = np.mean(f, axis=0)
+            f_std = np.std(f, axis=0)
+            plot_line(f_mean, f_std, linestyle="solid", label="{} mean".format(ex))
+
+            # plot max
+            f_mean_max = np.mean(f_max, axis=0)
+            f_std_max = np.std(f_max, axis=0)
+            plot_line(f_mean_max, f_std_max, linestyle="dashed", label="{} max".format(ex))
+
+        plt.xlabel("generations")
+        plt.ylabel("fitness")
+        plt.title("enemy set [{},{}]".format(en[0],en[1]))
+        plt.legend()
+        plt.savefig("generalist_fig/fitness_{}_{}.svg".format(en[0], en[1]))
+        plt.show()
+        pass
+
+            # todo average multi_fitness
+
+
 def plot_fitness(values, path, n_enemies, name=""):
     std = np.std(values, axis=1)
     avg = np.mean(values, axis=1)
@@ -80,8 +127,8 @@ def boxplot(prefix, enemies, experiements):
         else:
             suffix = ""
         for en in enemies:
-
             gains.append(np.loadtxt(f"{prefix}final_{en[0]}_{en[1]}{suffix}/{ex}_gains.txt"))
+
         boxes.append( ax1.boxplot(np.array(gains).T, positions=np.arange(2)-space,
                            boxprops=dict(facecolor=c),
                            **box_param) )
@@ -94,6 +141,7 @@ def boxplot(prefix, enemies, experiements):
     ax1.set_ylabel("Gain")
     ax1.set_xlabel("Enemy Group")
 
+    plt.title("Gain over 8 Enemies")
     plt.savefig("generalist_fig/boxplot.svg")
     plt.show()
 
@@ -102,6 +150,7 @@ def plot_final():
     experiments = ["pymoo", "incest"]
     enemies = [(3, 4), (6, 8)]
 
+    final_plot_fitness(prefix, experiments, enemies)
     boxplot(prefix, enemies, experiments)
 
 if __name__ == "__main__":
