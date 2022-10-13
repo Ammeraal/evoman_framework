@@ -32,10 +32,11 @@ def plot_line(mean, std, linestyle, label):
 def final_plot_fitness(prefix, experiments, enemies):
     for en in enemies:
         for ex in experiments:
+            name = ex
             if ex == "incest":
                 convert = False
             else:
-                suffix = ""
+                name = "NSGA-II"
                 convert = True
 
             # get data of all 10 samples
@@ -53,12 +54,12 @@ def final_plot_fitness(prefix, experiments, enemies):
             # plot mean and std over the training samples
             f_mean = np.mean(f, axis=0)
             f_std = np.std(f, axis=0)
-            plot_line(f_mean, f_std, linestyle="solid", label="{} mean".format(ex))
+            plot_line(f_mean, f_std, linestyle="solid", label="{} mean".format(name))
 
             # plot max
             f_mean_max = np.mean(f_max, axis=0)
             f_std_max = np.std(f_max, axis=0)
-            plot_line(f_mean_max, f_std_max, linestyle="dashed", label="{} max".format(ex))
+            plot_line(f_mean_max, f_std_max, linestyle="dashed", label="{} max".format(name))
 
         plt.xlabel("generations")
         plt.ylabel("fitness")
