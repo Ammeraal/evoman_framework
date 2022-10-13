@@ -66,12 +66,53 @@ def plot_pareto_front(values, name=""):
     plt.show()
     pass
 
+def boxplot(prefix, enemies, experiements):
+    fig, ax1 = plt.subplots(figsize=(6, 6))
+
+    space = 0.15
+    box_param = dict(patch_artist=True)
+    colors = ["g", "b"]
+    boxes = []
+    for ex, c in zip(experiements, colors):
+        gains = []
+        if ex == "incest":
+            suffix = "v2"
+        else:
+            suffix = ""
+        for en in enemies:
+
+            gains.append(np.loadtxt(f"{prefix}final_{en[0]}_{en[1]}{suffix}/{ex}_gains.txt"))
+        boxes.append( ax1.boxplot(np.array(gains).T, positions=np.arange(2)-space,
+                           boxprops=dict(facecolor=c),
+                           **box_param) )
+        space *= -1
+
+    #plt.xticks([1, 3], ["test1", "test3"])
+    ax1.legend([boxes[0]["boxes"][0], boxes[1]["boxes"][0]], ["NSGA-II", "incest"])
+    ax1.set_xticks(np.arange(2))
+    ax1.set_xticklabels(["[{},{}]".format(enemies[0][0], enemies[0][1]),"[{},{}]".format(enemies[1][0], enemies[1][1])])
+    ax1.set_ylabel("Gain")
+    ax1.set_xlabel("Enemy Group")
+
+    plt.savefig("generalist_fig/boxplot.svg")
+    plt.show()
+
+def plot_final():
+    prefix = "final_generalist/"
+    experiments = ["pymoo", "incest"]
+    enemies = [(3, 4), (6, 8)]
+
+    boxplot(prefix, enemies, experiments)
 
 if __name__ == "__main__":
-    experiment_name = "pymoo_1_2_adaptive_more_mut"
+    plot_final()
+    exit()
+
+    experiment_name = "final_6_8/0_incest"
     path = f"generalist_solution/{experiment_name}/"
+    #path = ~"final_generalist/{experiment_name}/"
     # always work with a fitness maximisation function. If the fitness is minimized in the algorithm use convert_to_max=True
-    data, (fitness, p, e) = load_data(path, convert_to_max=True)
+    data, (fitness, p, e) = load_data(path, convert_to_max=False)
     plot_fitness(fitness, path, data["n_enemies"], name=experiment_name)
     plot_pareto_front(fitness, name=experiment_name)
     avg_gain, max_gain = calc_gain_t(p, e)
